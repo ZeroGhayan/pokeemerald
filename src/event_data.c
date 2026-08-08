@@ -62,21 +62,14 @@ void DisableNationalPokedex(void)
 
 void EnableNationalPokedex(void)
 {
-    u16 *nationalDexVar = GetVarPointer(VAR_NATIONAL_DEX);
-    gSaveBlock2Ptr->pokedex.nationalMagic = 0xDA;
-    *nationalDexVar = 0x302;
-    FlagSet(FLAG_SYS_NATIONAL_DEX);
-    gSaveBlock2Ptr->pokedex.mode = DEX_MODE_NATIONAL;
-    gSaveBlock2Ptr->pokedex.order = 0;
-    ResetPokedexScrollPositions();
+    // National Dex is permanently disabled in this HackROM (Kanto-only)
+    // Do nothing on purpose.
 }
 
 bool32 IsNationalPokedexEnabled(void)
 {
-    if (gSaveBlock2Ptr->pokedex.nationalMagic == 0xDA && VarGet(VAR_NATIONAL_DEX) == 0x302 && FlagGet(FLAG_SYS_NATIONAL_DEX))
-        return TRUE;
-    else
-        return FALSE;
+    // Always return FALSE - National Dex can never be enabled
+    return FALSE;
 }
 
 void DisableMysteryEvent(void)
