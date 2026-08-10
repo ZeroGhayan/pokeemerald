@@ -304,7 +304,7 @@ RustboroCity_EventScript_StolenGoodsScene::
 	setvar VAR_ROUTE116_STATE, 1
 	clearflag FLAG_HIDE_ROUTE_116_MR_BRINEY
 	clearflag FLAG_HIDE_RUSTURF_TUNNEL_PEEKO
-	clearflag FLAG_HIDE_RUSTURF_TUNNEL_AQUA_GRUNT
+	@ HACKROM: Team Aqua removed — clearflag FLAG_HIDE_RUSTURF_TUNNEL_AQUA_GRUNT disabled
 	setflag FLAG_HIDE_BRINEYS_HOUSE_MR_BRINEY
 	setflag FLAG_HIDE_BRINEYS_HOUSE_PEEKO
 	releaseall

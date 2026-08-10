@@ -19,11 +19,11 @@ AquaHideout_B1F_OnTransition:
 	end
 
 AquaHideout_B1F_EventScript_ShowElectrode1::
-	clearflag FLAG_HIDE_AQUA_HIDEOUT_B1F_ELECTRODE_1
+	@ HACKROM: Team Aqua removed — clearflag FLAG_HIDE_AQUA_HIDEOUT_B1F_ELECTRODE_1 disabled
 	return
 
 AquaHideout_B1F_EventScript_ShowElectrode2::
-	clearflag FLAG_HIDE_AQUA_HIDEOUT_B1F_ELECTRODE_2
+	@ HACKROM: Team Aqua removed — clearflag FLAG_HIDE_AQUA_HIDEOUT_B1F_ELECTRODE_2 disabled
 	return
 
 AquaHideout_B1F_EventScript_Electrode1::
