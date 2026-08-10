@@ -534,20 +534,31 @@ LilycoveCity_ContestLobby_EventScript_ContestWinner6::
 	end
 
 LilycoveCity_ContestLobby_EventScript_Blender3Boy::
-	msgbox BerryBlender_Text_LetsGetBlendingAlready, MSGBOX_NPC
+	lock
+	faceplayer
+	@ HACKROM: Berry Blender removido
+	msgbox Common_Text_FeatureDisabled, MSGBOX_DEFAULT
+	release
 	end
+
 
 LilycoveCity_ContestLobby_EventScript_Blender3Girl::
-	msgbox BerryBlender_Text_WhatKindOfPokeblockWillIGet, MSGBOX_NPC
+	lock
+	faceplayer
+	@ HACKROM: Berry Blender removido
+	msgbox Common_Text_FeatureDisabled, MSGBOX_DEFAULT
+	release
 	end
 
+
 LilycoveCity_ContestLobby_EventScript_BerryBlenderSpeedRecords::
-	lockall
-	special ShowBerryBlenderRecordWindow
-	waitbuttonpress
-	special RemoveRecordsWindow
-	releaseall
+	lock
+	faceplayer
+	@ HACKROM: Berry Blender removido
+	msgbox Common_Text_FeatureDisabled, MSGBOX_DEFAULT
+	release
 	end
+
 
 LilycoveCity_ContestLobby_EventScript_LinkContestResults::
 	lockall

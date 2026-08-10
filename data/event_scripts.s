@@ -698,6 +698,16 @@ Common_EventScript_ShowBagIsFull::
 	release
 	end
 
+
+@ HACKROM: minigames removidos (Contest, Casino, Berry Blender, Dodrio Berry Picking, etc.)
+Common_EventScript_FeatureDisabled::
+	msgbox Common_Text_FeatureDisabled, MSGBOX_DEFAULT
+	release
+	end
+
+Common_Text_FeatureDisabled:
+	.string "This feature is not available.$"
+
 Common_EventScript_BagIsFull::
 	msgbox gText_TooBadBagIsFull, MSGBOX_DEFAULT
 	return

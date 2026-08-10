@@ -1037,18 +1037,18 @@ CableClub_EventScript_WirelessRecordMix::
 	end
 
 CableClub_EventScript_WirelessBerryCrush::
-	msgbox CableClub_Text_UseBerryCrush, MSGBOX_YESNO
-	goto_if_eq VAR_RESULT, NO, CableClub_EventScript_AbortLink
-	special HasAtLeastOneBerry
-	goto_if_eq VAR_RESULT, FALSE, CableClub_EventScript_NeedBerryForBerryCrush
-	setvar VAR_0x8004, LINK_GROUP_BERRY_CRUSH
-	goto CableClub_EventScript_SaveAndChooseLinkLeader
+	@ HACKROM: Berry Crush removido
+	msgbox Common_Text_FeatureDisabled, MSGBOX_DEFAULT
+	release
 	end
 
+
 CableClub_EventScript_NeedBerryForBerryCrush::
-	msgbox CableClub_Text_NeedBerryForBerryCrush, MSGBOX_DEFAULT
-	goto CableClub_EventScript_DirectCornerSelectService
+	@ HACKROM: Berry Crush removido
+	msgbox Common_Text_FeatureDisabled, MSGBOX_DEFAULT
+	release
 	end
+
 
 CableClub_EventScript_SaveAndChooseLinkLeader::
 	call Common_EventScript_SaveGame
@@ -1246,9 +1246,13 @@ MossdeepCity_GameCorner_1F_EventScript_PokemonJumpInfo::
 	end
 
 MossdeepCity_GameCorner_1F_EventScript_DodrioBerryPickingInfo::
-	msgbox MossdeepCity_GameCorner_1F_Text_DodrioBerryPickingInfo, MSGBOX_DEFAULT
+	lock
+	faceplayer
+	@ HACKROM: Dodrio Berry Picking removido
+	msgbox Common_Text_FeatureDisabled, MSGBOX_DEFAULT
 	release
 	end
+
 
 MossdeepCity_GameCorner_1F_EventScript_MinigameInfoExit::
 	msgbox MossdeepCity_GameCorner_1F_Text_TalkToOldManToPlay, MSGBOX_DEFAULT
@@ -1289,19 +1293,13 @@ MossdeepCity_GameCorner_1F_EventScript_PlayPokemonJump::
 	end
 
 MossdeepCity_GameCorner_1F_EventScript_PlayDodrioBerryPicking::
-	setvar VAR_0x8005, 1
-	special IsDodrioInParty
-	goto_if_eq VAR_RESULT, FALSE, MossdeepCity_GameCorner_1F_EventScript_DontHaveRequiredMon
-	msgbox MossdeepCity_GameCorner_1F_Text_EnterWhichPokemon, MSGBOX_DEFAULT
-	fadescreen FADE_TO_BLACK
-	setvar VAR_0x8005, 1
-	special ChooseMonForWirelessMinigame
-	goto_if_ge VAR_0x8004, PARTY_SIZE, MossdeepCity_GameCorner_1F_EventScript_AbortMinigame
-	call Common_EventScript_SaveGame
-	goto_if_eq VAR_RESULT, 0, MossdeepCity_GameCorner_1F_EventScript_AbortMinigame
-	setvar VAR_0x8004, LINK_GROUP_BERRY_PICKING
-	goto MossdeepCity_GameCorner_1F_EventScript_ChooseLinkLeader
+	lock
+	faceplayer
+	@ HACKROM: Dodrio Berry Picking removido
+	msgbox Common_Text_FeatureDisabled, MSGBOX_DEFAULT
+	release
 	end
+
 
 MossdeepCity_GameCorner_1F_EventScript_ChooseLinkLeader::
 	message CableClub_Text_ChooseGroupLeader
@@ -1379,7 +1377,10 @@ MossdeepCity_GameCorner_1F_EventScript_PokemonJumpRecords::
 	end
 
 MossdeepCity_GameCorner_1F_EventScript_DodrioBerryPickingRecords::
-	lockall
-	special ShowDodrioBerryPickingRecords
-	releaseall
+	lock
+	faceplayer
+	@ HACKROM: Dodrio Berry Picking removido
+	msgbox Common_Text_FeatureDisabled, MSGBOX_DEFAULT
+	release
 	end
+
