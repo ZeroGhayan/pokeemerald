@@ -3,7 +3,6 @@
 #include "data.h"
 #include "decompress.h"
 #include "pokemon.h"
-#include "data/pokemon_graphics/female_pic_tables.h"
 #include "text.h"
 
 EWRAM_DATA ALIGNED(4) u8 gDecompressionBuffer[0x4000] = {0};
@@ -84,16 +83,24 @@ void HandleLoadSpecialPokePic(const struct CompressedSpriteSheet *src, void *des
 }
 
 
-// HACKROM: escolhe sprite masculina ou feminina
+// HACKROM: escolhe sprite masculina ou feminina (com fallback seguro)
+extern const struct CompressedSpriteSheet gMonFrontPicTableFemale[];
+extern const struct CompressedSpriteSheet gMonBackPicTableFemale[];
+
 static const u32 *GetGenderedPicData(const struct CompressedSpriteSheet *src, s32 species, u32 personality, bool8 isFrontPic)
 {
     if (species > 0 && species <= NUM_SPECIES
         && GetGenderFromSpeciesAndPersonality(species, personality) == MON_FEMALE)
     {
+        const u32 *femaleData;
         if (isFrontPic)
-            return gMonFrontPicTableFemale[species].data;
+            femaleData = gMonFrontPicTableFemale[species].data;
         else
-            return gMonBackPicTableFemale[species].data;
+            femaleData = gMonBackPicTableFemale[species].data;
+
+        // Se a espécie não tem sprite feminina registrada, usa a masculina
+        if (femaleData != NULL)
+            return femaleData;
     }
     return src->data;
 }

@@ -1306,6 +1306,7 @@ SECTIONS {
     ALIGN(4)
     {
         src/anim_mon_front_pics.o(.rodata);
+        src/data/pokemon_graphics/female_pics.o(.rodata);
     } > ROM =0
 
     gfx_data __gfx_load_address :
