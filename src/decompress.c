@@ -3,6 +3,7 @@
 #include "data.h"
 #include "decompress.h"
 #include "pokemon.h"
+#include "data/pokemon_graphics/female_pic_tables.h"
 #include "text.h"
 
 EWRAM_DATA ALIGNED(4) u8 gDecompressionBuffer[0x4000] = {0};
@@ -82,6 +83,21 @@ void HandleLoadSpecialPokePic(const struct CompressedSpriteSheet *src, void *des
     LoadSpecialPokePic_2(src, dest, species, personality, isFrontPic);
 }
 
+
+// HACKROM: escolhe sprite masculina ou feminina
+static const u32 *GetGenderedPicData(const struct CompressedSpriteSheet *src, s32 species, u32 personality, bool8 isFrontPic)
+{
+    if (species > 0 && species <= NUM_SPECIES
+        && GetGenderFromSpeciesAndPersonality(species, personality) == MON_FEMALE)
+    {
+        if (isFrontPic)
+            return gMonFrontPicTableFemale[species].data;
+        else
+            return gMonBackPicTableFemale[species].data;
+    }
+    return src->data;
+}
+
 void LoadSpecialPokePic(const struct CompressedSpriteSheet *src, void *dest, s32 species, u32 personality, bool8 isFrontPic)
 {
     if (species == SPECIES_UNOWN)
@@ -105,7 +121,7 @@ void LoadSpecialPokePic(const struct CompressedSpriteSheet *src, void *dest, s32
     }
     else
     {
-        LZ77UnCompWram(src->data, dest);
+        LZ77UnCompWram(GetGenderedPicData(src, species, personality, isFrontPic), dest);
     }
 
     DuplicateDeoxysTiles(dest, species);
@@ -336,7 +352,7 @@ void LoadSpecialPokePic_2(const struct CompressedSpriteSheet *src, void *dest, s
     }
     else
     {
-        LZ77UnCompWram(src->data, dest);
+        LZ77UnCompWram(GetGenderedPicData(src, species, personality, isFrontPic), dest);
     }
 
     DuplicateDeoxysTiles(dest, species);
@@ -398,7 +414,7 @@ void LoadSpecialPokePic_DontHandleDeoxys(const struct CompressedSpriteSheet *src
     }
     else
     {
-        LZ77UnCompWram(src->data, dest);
+        LZ77UnCompWram(GetGenderedPicData(src, species, personality, isFrontPic), dest);
     }
 
     DrawSpindaSpots(species, personality, dest, isFrontPic);
