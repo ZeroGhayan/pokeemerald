@@ -8602,10 +8602,8 @@ static void Cmd_furycuttercalc(void)
 
 static void Cmd_friendshiptodamagecalculation(void)
 {
-    if (gBattleMoves[gCurrentMove].effect == EFFECT_RETURN)
-        gDynamicBasePower = 10 * (gBattleMons[gBattlerAttacker].friendship) / 25;
-    else // EFFECT_FRUSTRATION
-        gDynamicBasePower = 10 * (MAX_FRIENDSHIP - gBattleMons[gBattlerAttacker].friendship) / 25;
+    // HACKROM: Return and Frustration always use max power (competitive-style, independent of friendship)
+    gDynamicBasePower = 102;
 
     gBattlescriptCurrInstr++;
 }
