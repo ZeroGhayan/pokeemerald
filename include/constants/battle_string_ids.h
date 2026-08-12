@@ -378,8 +378,13 @@
 #define STRINGID_PKMNBOXLANETTESPCFULL      378
 #define STRINGID_TRAINER1WINTEXT            379
 #define STRINGID_TRAINER2WINTEXT            380
+#define STRINGID_PKMNGETTINGHORNY           381 // HACKROM Infatuation 1->2
+#define STRINGID_PKMNCREAMINGHERSELF        382 // HACKROM Infatuation 2->3
+#define STRINGID_PKMNFOCUSRETURNED          383 // HACKROM Infatuation 3->2
+#define STRINGID_PKMNLOSTINTEREST           384 // HACKROM Infatuation 2->1
+#define STRINGID_PKMNISNTFRIENDLYANYMORE    385 // HACKROM Infatuation 1->0
 
-#define BATTLESTRINGS_COUNT                 381
+#define BATTLESTRINGS_COUNT                 386
 
 // This is the string id that gBattleStringsTable starts with.
 // String ids before this (e.g. STRINGID_INTROMSG) are not in the table,

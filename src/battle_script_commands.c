@@ -1932,6 +1932,12 @@ static void Cmd_datahpupdate(void)
                 {
                     gHpDealt = gBattleMons[gActiveBattler].hp;
                     gBattleMons[gActiveBattler].hp = 0;
+                    // HACKROM: KO damage also lowers infatuation level by 1
+                    {
+                        u8 lv = GetBattlerInfatuationLevel(gActiveBattler);
+                        if (lv > 0)
+                            SetBattlerInfatuationLevel(gActiveBattler, lv - 1);
+                    }
                 }
 
                 // Record damage for Shell Bell

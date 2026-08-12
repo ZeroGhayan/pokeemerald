@@ -1650,7 +1650,8 @@ BattleScript_EffectAttract::
 	tryinfatuating BattleScript_ButItFailed
 	attackanimation
 	waitanimation
-	printstring STRINGID_PKMNFELLINLOVE
+	@ HACKROM: message depends on new infatuation level (set in tryinfatuating)
+	printfromtable gInfatuationLevelUpStringIds
 	waitmessage B_WAIT_TIME_LONG
 	goto BattleScript_MoveEnd
 

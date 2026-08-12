@@ -118,6 +118,9 @@ static const u8 sText_PkmnAlreadyConfused[] = _("{B_DEF_NAME_WITH_PREFIX} is\nal
 static const u8 sText_PkmnFellInLove[] = _("{B_DEF_NAME_WITH_PREFIX}\nfell in love!"); // level 0->1
 static const u8 sText_PkmnGettingHorny[] = _("{B_DEF_NAME_WITH_PREFIX}\nis getting horny!"); // 1->2
 static const u8 sText_PkmnCreamingHerself[] = _("{B_DEF_NAME_WITH_PREFIX}\nis creaming herself!"); // 2->3
+static const u8 sText_PkmnFocusReturned[] = _("{B_DEF_NAME_WITH_PREFIX}'s\nfocus returned!"); // 3->2
+static const u8 sText_PkmnLostInterest[] = _("{B_DEF_NAME_WITH_PREFIX}\nlost its interest!"); // 2->1
+static const u8 sText_PkmnIsntFriendlyAnymore[] = _("{B_DEF_NAME_WITH_PREFIX}\nisn't friendly anymore!"); // 1->0
 static const u8 sText_PkmnInLove[] = _("{B_ATK_NAME_WITH_PREFIX} is in love\nwith {B_SCR_ACTIVE_NAME_WITH_PREFIX}!");
 static const u8 sText_PkmnImmobilizedByLove[] = _("{B_ATK_NAME_WITH_PREFIX} is\nimmobilized by love!");
 static const u8 sText_PkmnBlownAway[] = _("{B_DEF_NAME_WITH_PREFIX} was\nblown away!");
@@ -516,6 +519,20 @@ static const u8 sText_Trainer2WinText[];
 static const u8 sText_TwoInGameTrainersDefeated[];
 static const u8 sText_Trainer2LoseText[];
 
+// HACKROM: index = new infatuation level (1-3); 0 unused
+const u16 gInfatuationLevelUpStringIds[] = {
+    STRINGID_PKMNFELLINLOVE,      // 0 unused / fallback
+    STRINGID_PKMNFELLINLOVE,      // 0 -> 1
+    STRINGID_PKMNGETTINGHORNY,    // 1 -> 2
+    STRINGID_PKMNCREAMINGHERSELF, // 2 -> 3
+};
+
+const u16 gInfatuationLevelDownStringIds[] = {
+    STRINGID_PKMNISNTFRIENDLYANYMORE, // 1 -> 0
+    STRINGID_PKMNLOSTINTEREST,        // 2 -> 1
+    STRINGID_PKMNFOCUSRETURNED,       // 3 -> 2
+};
+
 const u8 *const gBattleStringsTable[BATTLESTRINGS_COUNT - BATTLESTRINGS_TABLE_START] =
 {
     [STRINGID_TRAINER1LOSETEXT - BATTLESTRINGS_TABLE_START] = sText_Trainer1LoseText,
@@ -576,6 +593,11 @@ const u8 *const gBattleStringsTable[BATTLESTRINGS_COUNT - BATTLESTRINGS_TABLE_ST
     [STRINGID_PKMNWASCONFUSED - BATTLESTRINGS_TABLE_START] = sText_PkmnWasConfused,
     [STRINGID_PKMNALREADYCONFUSED - BATTLESTRINGS_TABLE_START] = sText_PkmnAlreadyConfused,
     [STRINGID_PKMNFELLINLOVE - BATTLESTRINGS_TABLE_START] = sText_PkmnFellInLove,
+    [STRINGID_PKMNGETTINGHORNY - BATTLESTRINGS_TABLE_START] = sText_PkmnGettingHorny,
+    [STRINGID_PKMNCREAMINGHERSELF - BATTLESTRINGS_TABLE_START] = sText_PkmnCreamingHerself,
+    [STRINGID_PKMNFOCUSRETURNED - BATTLESTRINGS_TABLE_START] = sText_PkmnFocusReturned,
+    [STRINGID_PKMNLOSTINTEREST - BATTLESTRINGS_TABLE_START] = sText_PkmnLostInterest,
+    [STRINGID_PKMNISNTFRIENDLYANYMORE - BATTLESTRINGS_TABLE_START] = sText_PkmnIsntFriendlyAnymore,
     [STRINGID_PKMNINLOVE - BATTLESTRINGS_TABLE_START] = sText_PkmnInLove,
     [STRINGID_PKMNIMMOBILIZEDBYLOVE - BATTLESTRINGS_TABLE_START] = sText_PkmnImmobilizedByLove,
     [STRINGID_PKMNBLOWNAWAY - BATTLESTRINGS_TABLE_START] = sText_PkmnBlownAway,
