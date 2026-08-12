@@ -225,4 +225,6 @@ extern const u8 BattleScript_ActionThrowPokeblock[];
 
 extern const u8 BattleScript_InfatuationLevelDown[];
 
+extern const u8 BattleScript_SuccessTrainerBallThrow[];
+
 #endif // GUARD_BATTLE_SCRIPTS_H

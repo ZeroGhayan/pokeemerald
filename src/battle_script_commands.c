@@ -9929,7 +9929,9 @@ static void Cmd_handleballthrow(void)
     gActiveBattler = gBattlerAttacker;
     gBattlerTarget = BATTLE_OPPOSITE(gBattlerAttacker);
 
-    if (gBattleTypeFlags & BATTLE_TYPE_TRAINER)
+    // HACKROM: allow catching trainer mons only at infatuation level 3
+    if ((gBattleTypeFlags & BATTLE_TYPE_TRAINER)
+        && GetBattlerInfatuationLevel(gBattlerTarget) < 3)
     {
         BtlController_EmitBallThrowAnim(B_COMM_TO_CONTROLLER, BALL_TRAINER_BLOCK);
         MarkBattlerForControllerExec(gActiveBattler);
@@ -10010,6 +10012,18 @@ static void Cmd_handleballthrow(void)
         if (gBattleMons[gBattlerTarget].status1 & (STATUS1_POISON | STATUS1_BURN | STATUS1_PARALYSIS | STATUS1_TOXIC_POISON))
             odds = (odds * 15) / 10;
 
+        // HACKROM: Infatuation catch multiplier ONLY in wild battles (x2/x3/x4)
+        if (!(gBattleTypeFlags & BATTLE_TYPE_TRAINER))
+        {
+            u8 loveLv = GetBattlerInfatuationLevel(gBattlerTarget);
+            if (loveLv == 1)
+                odds *= 2;
+            else if (loveLv == 2)
+                odds *= 3;
+            else if (loveLv >= 3)
+                odds *= 4;
+        }
+
         if (gLastUsedItem != ITEM_SAFARI_BALL)
         {
             if (gLastUsedItem == ITEM_MASTER_BALL)
@@ -10027,7 +10041,11 @@ static void Cmd_handleballthrow(void)
         {
             BtlController_EmitBallThrowAnim(B_COMM_TO_CONTROLLER, BALL_3_SHAKES_SUCCESS);
             MarkBattlerForControllerExec(gActiveBattler);
-            gBattlescriptCurrInstr = BattleScript_SuccessBallThrow;
+            // HACKROM: trainer catch continues battle
+            if (gBattleTypeFlags & BATTLE_TYPE_TRAINER)
+                gBattlescriptCurrInstr = BattleScript_SuccessTrainerBallThrow;
+            else
+                gBattlescriptCurrInstr = BattleScript_SuccessBallThrow;
             SetMonData(&gEnemyParty[gBattlerPartyIndexes[gBattlerTarget]], MON_DATA_POKEBALL, &gLastUsedItem);
 
             if (CalculatePlayerPartyCount() == PARTY_SIZE)
@@ -10052,7 +10070,11 @@ static void Cmd_handleballthrow(void)
 
             if (shakes == BALL_3_SHAKES_SUCCESS) // mon caught, copy of the code above
             {
-                gBattlescriptCurrInstr = BattleScript_SuccessBallThrow;
+                // HACKROM: trainer catch continues battle
+                if (gBattleTypeFlags & BATTLE_TYPE_TRAINER)
+                    gBattlescriptCurrInstr = BattleScript_SuccessTrainerBallThrow;
+                else
+                    gBattlescriptCurrInstr = BattleScript_SuccessBallThrow;
                 SetMonData(&gEnemyParty[gBattlerPartyIndexes[gBattlerTarget]], MON_DATA_POKEBALL, &gLastUsedItem);
 
                 if (CalculatePlayerPartyCount() == PARTY_SIZE)

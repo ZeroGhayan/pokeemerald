@@ -61,6 +61,32 @@ BattleScript_SafariBallThrow::
 	updatestatusicon BS_ATTACKER
 	handleballthrow
 
+
+@ HACKROM: catch from trainer at infatuation lv3; do not end battle
+BattleScript_SuccessTrainerBallThrow::
+	printstring STRINGID_GOTCHAPKMNCAUGHTPLAYER
+	trysetcaughtmondexflags BattleScript_TrainerCatchNickname
+	printstring STRINGID_PKMNDATAADDEDTODEX
+	waitstate
+	setbyte gBattleCommunication, 0
+	displaydexinfo
+BattleScript_TrainerCatchNickname::
+	printstring STRINGID_GIVENICKNAMECAPTURED
+	waitstate
+	setbyte gBattleCommunication, 0
+	trygivecaughtmonnick BattleScript_TrainerCatchGiveMon
+	givecaughtmon
+	printfromtable gCaughtMonStringIds
+	waitmessage B_WAIT_TIME_LONG
+	goto BattleScript_TrainerCatchAfterGive
+BattleScript_TrainerCatchGiveMon::
+	givecaughtmon
+BattleScript_TrainerCatchAfterGive::
+	@ Remove caught mon from trainer party / faint on field, then handle faint
+	various BS_TARGET, VARIOUS_TRAINER_CATCH_FAINT
+	@ Do not set B_OUTCOME_CAUGHT — battle continues if trainer has more mons
+	finishaction
+
 BattleScript_SuccessBallThrow::
 	jumpifhalfword CMP_EQUAL, gLastUsedItem, ITEM_SAFARI_BALL, BattleScript_PrintCaughtMonInfo
 	incrementgamestat GAME_STAT_POKEMON_CAPTURES
