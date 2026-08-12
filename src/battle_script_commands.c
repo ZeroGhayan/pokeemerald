@@ -89,6 +89,9 @@ static void Cmd_attackanimation(void);
 static void Cmd_waitanimation(void);
 static void Cmd_healthbarupdate(void);
 static void Cmd_datahpupdate(void);
+
+// HACKROM: 0 = none; 1-3 = level before damage drop (for down message)
+static u8 sPendingInfatuationDownLevel;
 static void Cmd_critmessage(void);
 static void Cmd_effectivenesssound(void);
 static void Cmd_resultmessage(void);
@@ -1925,7 +1928,10 @@ static void Cmd_datahpupdate(void)
                     {
                         u8 lv = GetBattlerInfatuationLevel(gActiveBattler);
                         if (lv > 0 && gBattleMoveDamage > 0)
+                        {
+                            sPendingInfatuationDownLevel = lv; // level before drop
                             SetBattlerInfatuationLevel(gActiveBattler, lv - 1);
+                        }
                     }
                 }
                 else
@@ -1936,7 +1942,10 @@ static void Cmd_datahpupdate(void)
                     {
                         u8 lv = GetBattlerInfatuationLevel(gActiveBattler);
                         if (lv > 0)
+                        {
+                            sPendingInfatuationDownLevel = lv;
                             SetBattlerInfatuationLevel(gActiveBattler, lv - 1);
+                        }
                     }
                 }
 
@@ -1994,6 +2003,18 @@ static void Cmd_datahpupdate(void)
         if (gSpecialStatuses[gActiveBattler].shellBellDmg == 0)
             gSpecialStatuses[gActiveBattler].shellBellDmg = IGNORE_SHELL_BELL;
     }
+
+    // HACKROM: show infatuation level-down message after HP update
+    if (sPendingInfatuationDownLevel != 0)
+    {
+        gBattleCommunication[MULTISTRING_CHOOSER] = sPendingInfatuationDownLevel - 1; // 0,1,2
+        gBattleScripting.battler = gActiveBattler;
+        sPendingInfatuationDownLevel = 0;
+        BattleScriptPush(gBattlescriptCurrInstr + 2);
+        gBattlescriptCurrInstr = BattleScript_InfatuationLevelDown;
+        return;
+    }
+
     gBattlescriptCurrInstr += 2;
 }
 

@@ -4191,6 +4191,12 @@ BattleScript_RoughSkinActivates::
 	tryfaintmon BS_ATTACKER
 	return
 
+BattleScript_InfatuationLevelDown::
+	@ HACKROM: MULTISTRING_CHOOSER = level before drop - 1
+	printfromtable gInfatuationLevelDownStringIds
+	waitmessage B_WAIT_TIME_LONG
+	return
+
 BattleScript_CuteCharmActivates::
 	status2animation BS_ATTACKER, STATUS2_INFATUATION
 	printstring STRINGID_PKMNSXINFATUATEDY
