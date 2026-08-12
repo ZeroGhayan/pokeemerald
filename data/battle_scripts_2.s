@@ -82,10 +82,11 @@ BattleScript_TrainerCatchNickname::
 BattleScript_TrainerCatchGiveMon::
 	givecaughtmon
 BattleScript_TrainerCatchAfterGive::
-	@ Remove caught mon from trainer party / faint on field, then handle faint
+	@ HACKROM: remove from trainer party, resume BGM, then handle as fainted for switch-in
 	various BS_TARGET, VARIOUS_TRAINER_CATCH_FAINT
-	@ Do not set B_OUTCOME_CAUGHT — battle continues if trainer has more mons
-	finishaction
+	waitstate
+	@ Do not set B_OUTCOME_CAUGHT — continue if trainer has more mons
+	goto BattleScript_HandleFaintedMon
 
 BattleScript_SuccessBallThrow::
 	jumpifhalfword CMP_EQUAL, gLastUsedItem, ITEM_SAFARI_BALL, BattleScript_PrintCaughtMonInfo

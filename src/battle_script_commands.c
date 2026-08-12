@@ -6527,6 +6527,24 @@ static void Cmd_various(void)
         BtlController_EmitPlayFanfareOrBGM(B_COMM_TO_CONTROLLER, MUS_VICTORY_TRAINER, TRUE);
         MarkBattlerForControllerExec(gActiveBattler);
         break;
+    case VARIOUS_TRAINER_CATCH_FAINT: // HACKROM
+        {
+            u8 partyIndex = gBattlerPartyIndexes[gActiveBattler];
+
+            // Mon already copied to player via givecaughtmon — clear trainer's slot
+            ZeroMonData(&gEnemyParty[partyIndex]);
+
+            gBattleMons[gActiveBattler].hp = 0;
+            gHitMarker |= HITMARKER_FAINTED(gActiveBattler);
+
+            // Recall sprite into ball (caught, not a normal faint message path)
+            BtlController_EmitReturnMonToBall(B_COMM_TO_CONTROLLER, FALSE);
+            MarkBattlerForControllerExec(gActiveBattler);
+
+            // Resume battle BGM after catch fanfare (Colosseum/XD-style)
+            PlayBattleBGM();
+        }
+        break;
     }
 
     gBattlescriptCurrInstr += 3;
