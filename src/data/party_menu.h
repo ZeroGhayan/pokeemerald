@@ -1093,6 +1093,52 @@ static const struct SpriteTemplate sSpriteTemplate_StatusIcons =
     .callback = SpriteCallbackDummy,
 };
 
+// HACKROM: Infatuation level icons (frames 0,1,2 = levels 1,2,3)
+#define TAG_INFATUATION_ICONS 0x272 // distinct from TAG_STATUS_ICONS
+
+static const union AnimCmd sSpriteAnim_InfatuationLv1[] =
+{
+    ANIMCMD_FRAME(0, 0),
+    ANIMCMD_END
+};
+static const union AnimCmd sSpriteAnim_InfatuationLv2[] =
+{
+    ANIMCMD_FRAME(4, 0),
+    ANIMCMD_END
+};
+static const union AnimCmd sSpriteAnim_InfatuationLv3[] =
+{
+    ANIMCMD_FRAME(8, 0),
+    ANIMCMD_END
+};
+static const union AnimCmd *const sAnims_InfatuationIcons[] =
+{
+    sSpriteAnim_InfatuationLv1,
+    sSpriteAnim_InfatuationLv2,
+    sSpriteAnim_InfatuationLv3,
+};
+
+static const struct CompressedSpriteSheet sSpriteSheet_InfatuationIcons =
+{
+    gInfatuationGfx_Icons, 0x200, TAG_INFATUATION_ICONS
+};
+static const struct CompressedSpritePalette sSpritePalette_InfatuationIcons =
+{
+    gInfatuationPal_Icons, TAG_INFATUATION_ICONS
+};
+static const struct SpriteTemplate sSpriteTemplate_InfatuationIcons =
+{
+    .tileTag = TAG_INFATUATION_ICONS,
+    .paletteTag = TAG_INFATUATION_ICONS,
+    .oam = &sOamData_StatusCondition,
+    .anims = sAnims_InfatuationIcons,
+    .images = NULL,
+    .affineAnims = gDummySpriteAffineAnimTable,
+    .callback = SpriteCallbackDummy,
+};
+
+
+
 // Mask for the partners party in a multi battle. TRUE if in the partners party, FALSE otherwise
 // The 7th slot is Cancel, and the 8th slot is unreachable
 // Used only to determine whether or not to show the Deoxys form icon sprite

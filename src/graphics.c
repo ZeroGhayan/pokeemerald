@@ -1118,6 +1118,11 @@ const u32 gPartyMenuPokeball_Pal[] = INCGFX_U32("graphics/party_menu/pokeball.pn
 
 const u32 gStatusGfx_Icons[] = INCGFX_U32("graphics/interface/status_icons.png", ".4bpp.lz");
 const u32 gStatusPal_Icons[] = INCGFX_U32("graphics/interface/status_icons.png", ".gbapal.lz");
+// HACKROM: Infatuation level icons (party/summary + battle)
+const u32 gInfatuationGfx_Icons[] = INCGFX_U32("graphics/interface/infatuation_icons.png", ".4bpp.lz");
+const u32 gInfatuationPal_Icons[] = INCGFX_U32("graphics/interface/infatuation_icons.png", ".gbapal.lz");
+const u32 gInfatuationGfx_Battle[] = INCGFX_U32("graphics/battle_interface/infatuation.png", ".4bpp.lz");
+const u32 gInfatuationPal_Battle[] = INCGFX_U32("graphics/battle_interface/infatuation.png", ".gbapal.lz");
 
 const u32 gMoveTypes_Gfx[] = INCGFX_U32("graphics/types/move_types.4bpp", ".lz");
 const u32 gMoveTypes_Pal[] = INCGFX_U32("graphics/types/move_types.gbapal", ".lz");
