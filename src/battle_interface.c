@@ -866,6 +866,151 @@ static void UNUSED Debug_DrawNumberPair(s16 number1, s16 number2, u16 *dest)
 #define hBar_HealthBoxSpriteId      data[5]
 #define hBar_Data6                  data[6]
 
+
+// HACKROM: Infatuation level icon in battle
+#define TAG_INFATUATION_BATTLE 0xD700
+
+static u8 sInfatuationBattleSpriteIds[MAX_BATTLERS_COUNT];
+static bool8 sInfatuationBattleGfxLoaded;
+
+static const struct OamData sOamData_InfatuationBattle =
+{
+    .y = 0,
+    .affineMode = ST_OAM_AFFINE_OFF,
+    .objMode = ST_OAM_OBJ_NORMAL,
+    .mosaic = FALSE,
+    .bpp = ST_OAM_4BPP,
+    .shape = SPRITE_SHAPE(32x8),
+    .x = 0,
+    .matrixNum = 0,
+    .size = SPRITE_SIZE(32x8),
+    .tileNum = 0,
+    .priority = 1,
+    .paletteNum = 0,
+    .affineParam = 0,
+};
+
+static const union AnimCmd sAnim_InfatuationBattleLv1[] = { ANIMCMD_FRAME(0, 0), ANIMCMD_END };
+static const union AnimCmd sAnim_InfatuationBattleLv2[] = { ANIMCMD_FRAME(4, 0), ANIMCMD_END };
+static const union AnimCmd sAnim_InfatuationBattleLv3[] = { ANIMCMD_FRAME(8, 0), ANIMCMD_END };
+static const union AnimCmd *const sAnims_InfatuationBattle[] =
+{
+    sAnim_InfatuationBattleLv1,
+    sAnim_InfatuationBattleLv2,
+    sAnim_InfatuationBattleLv3,
+};
+
+static const struct CompressedSpriteSheet sSpriteSheet_InfatuationBattle =
+{
+    gInfatuationGfx_Battle, 0x200, TAG_INFATUATION_BATTLE
+};
+static const struct CompressedSpritePalette sSpritePalette_InfatuationBattle =
+{
+    gInfatuationPal_Battle, TAG_INFATUATION_BATTLE
+};
+static const struct SpriteTemplate sSpriteTemplate_InfatuationBattle =
+{
+    .tileTag = TAG_INFATUATION_BATTLE,
+    .paletteTag = TAG_INFATUATION_BATTLE,
+    .oam = &sOamData_InfatuationBattle,
+    .anims = sAnims_InfatuationBattle,
+    .images = NULL,
+    .affineAnims = gDummySpriteAffineAnimTable,
+    .callback = SpriteCallbackDummy,
+};
+
+static void SpriteCB_InfatuationBattleIcon(struct Sprite *sprite)
+{
+    u8 healthboxSpriteId = sprite->data[0];
+    s16 xOff = sprite->data[2];
+    s16 yOff = sprite->data[3];
+
+    if (healthboxSpriteId == SPRITE_NONE)
+    {
+        sprite->invisible = TRUE;
+        return;
+    }
+    sprite->x = gSprites[healthboxSpriteId].x + xOff;
+    sprite->y = gSprites[healthboxSpriteId].y + yOff;
+    sprite->x2 = gSprites[healthboxSpriteId].x2;
+    sprite->y2 = gSprites[healthboxSpriteId].y2;
+    // data[4] = 1 means force hidden (level 0)
+    if (sprite->data[4] || gSprites[healthboxSpriteId].invisible)
+        sprite->invisible = TRUE;
+}
+
+static void LoadInfatuationBattleGfx(void)
+{
+    if (!sInfatuationBattleGfxLoaded)
+    {
+        u8 i;
+        LoadCompressedSpriteSheet(&sSpriteSheet_InfatuationBattle);
+        LoadCompressedSpritePalette(&sSpritePalette_InfatuationBattle);
+        for (i = 0; i < MAX_BATTLERS_COUNT; i++)
+            sInfatuationBattleSpriteIds[i] = SPRITE_NONE;
+        sInfatuationBattleGfxLoaded = TRUE;
+    }
+}
+
+static void CreateInfatuationBattleIcon(u8 battler, u8 healthboxSpriteId)
+{
+    s16 xOff, yOff;
+    u8 spriteId;
+
+    LoadInfatuationBattleGfx();
+
+    // Position roughly to the right of the STATUS1 icon slot
+    if (GetBattlerSide(battler) == B_SIDE_PLAYER)
+    {
+        xOff = IsDoubleBattle() ? 48 : 56;
+        yOff = IsDoubleBattle() ? -8 : -10;
+    }
+    else
+    {
+        xOff = -8;
+        yOff = -8;
+    }
+
+    spriteId = CreateSprite(&sSpriteTemplate_InfatuationBattle, 0, 0, 0);
+    sInfatuationBattleSpriteIds[battler] = spriteId;
+    gSprites[spriteId].callback = SpriteCB_InfatuationBattleIcon;
+    gSprites[spriteId].data[0] = healthboxSpriteId;
+    gSprites[spriteId].data[1] = battler;
+    gSprites[spriteId].data[2] = xOff;
+    gSprites[spriteId].data[3] = yOff;
+    gSprites[spriteId].data[4] = TRUE; // start hidden
+    gSprites[spriteId].invisible = TRUE;
+    gSprites[spriteId].oam.priority = 1;
+}
+
+void UpdateInfatuationBattleIcon(u8 battler)
+{
+    u8 level;
+    u8 spriteId;
+
+    if (battler >= MAX_BATTLERS_COUNT)
+        return;
+    spriteId = sInfatuationBattleSpriteIds[battler];
+    if (spriteId == SPRITE_NONE || spriteId >= MAX_SPRITES)
+        return;
+
+    level = GetBattlerInfatuationLevel(battler);
+    if (level == 0)
+    {
+        gSprites[spriteId].data[4] = TRUE;
+        gSprites[spriteId].invisible = TRUE;
+    }
+    else
+    {
+        if (level > 3)
+            level = 3;
+        StartSpriteAnim(&gSprites[spriteId], level - 1);
+        gSprites[spriteId].data[4] = FALSE;
+        gSprites[spriteId].invisible = FALSE;
+    }
+}
+
+
 u8 CreateBattlerHealthboxSprites(u8 battler)
 {
     s16 data6 = 0;
@@ -946,6 +1091,9 @@ u8 CreateBattlerHealthboxSprites(u8 battler)
     healthBarSpritePtr->hBar_HealthBoxSpriteId = healthboxLeftSpriteId;
     healthBarSpritePtr->hBar_Data6 = data6;
     healthBarSpritePtr->invisible = TRUE;
+
+    // HACKROM: create infatuation icon sprite for this battler
+    CreateInfatuationBattleIcon(battler, healthboxLeftSpriteId);
 
     return healthboxLeftSpriteId;
 }
@@ -2000,6 +2148,8 @@ static void UpdateStatusIconInHealthbox(u8 healthboxSpriteId)
     u8 statusPalId;
 
     battler = gSprites[healthboxSpriteId].hMain_Battler;
+    // HACKROM: keep infatuation icon in sync whenever status icon refreshes
+    UpdateInfatuationBattleIcon(battler);
     healthBarSpriteId = gSprites[healthboxSpriteId].hMain_HealthBarSpriteId;
     if (GetBattlerSide(battler) == B_SIDE_PLAYER)
     {
