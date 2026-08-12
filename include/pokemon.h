@@ -94,6 +94,7 @@ enum {
     MON_DATA_SPEED2,
     MON_DATA_SPATK2,
     MON_DATA_SPDEF2,
+    MON_DATA_INFATUATION_LEVEL, // HACKROM: 0-3, persists outside battle
 };
 
 struct PokemonSubstruct0
@@ -103,7 +104,8 @@ struct PokemonSubstruct0
     u32 experience;
     u8 ppBonuses;
     u8 friendship;
-    u16 filler;
+    u16 infatuationLevel:2; // HACKROM: 0-3, persists outside battle
+    u16 filler:14;
 };
 
 struct PokemonSubstruct1

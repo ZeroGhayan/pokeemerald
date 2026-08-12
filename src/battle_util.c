@@ -75,6 +75,32 @@ static const u8 sPkblToEscapeFactor[][3] = {
 static const u8 sGoNearCounterToCatchFactor[] = {4, 3, 2, 1};
 static const u8 sGoNearCounterToEscapeFactor[] = {4, 4, 4, 4};
 
+
+// HACKROM: persistent infatuation level (0-3) stored on the party mon
+u8 GetBattlerInfatuationLevel(u8 battler)
+{
+    struct Pokemon *mon;
+    if (GetBattlerSide(battler) == B_SIDE_PLAYER)
+        mon = &gPlayerParty[gBattlerPartyIndexes[battler]];
+    else
+        mon = &gEnemyParty[gBattlerPartyIndexes[battler]];
+    return GetMonData(mon, MON_DATA_INFATUATION_LEVEL, NULL);
+}
+
+void SetBattlerInfatuationLevel(u8 battler, u8 level)
+{
+    struct Pokemon *mon;
+    if (level > 3)
+        level = 3;
+    if (GetBattlerSide(battler) == B_SIDE_PLAYER)
+        mon = &gPlayerParty[gBattlerPartyIndexes[battler]];
+    else
+        mon = &gEnemyParty[gBattlerPartyIndexes[battler]];
+    SetMonData(mon, MON_DATA_INFATUATION_LEVEL, &level);
+    if (level == 0)
+        gBattleMons[battler].status2 &= ~STATUS2_INFATUATION;
+}
+
 void HandleAction_UseMove(void)
 {
     u8 side;
@@ -2183,23 +2209,40 @@ u8 AtkCanceler_UnableToUseMove(void)
             }
             gBattleStruct->atkCancelerTracker++;
             break;
-        case CANCELER_IN_LOVE: // infatuation
-            if (gBattleMons[gBattlerAttacker].status2 & STATUS2_INFATUATION)
+        case CANCELER_IN_LOVE: // HACKROM: level-based infatuation 30%/50%/70%
             {
-                gBattleScripting.battler = CountTrailingZeroBits((gBattleMons[gBattlerAttacker].status2 & STATUS2_INFATUATION) >> 0x10);
-                if (Random() & 1)
+                u8 loveLevel = GetBattlerInfatuationLevel(gBattlerAttacker);
+                if (loveLevel > 0 || (gBattleMons[gBattlerAttacker].status2 & STATUS2_INFATUATION))
                 {
-                    BattleScriptPushCursor();
+                    u8 failChance;
+                    if (loveLevel == 0)
+                        loveLevel = 1;
+                    if (loveLevel == 1)
+                        failChance = 30;
+                    else if (loveLevel == 2)
+                        failChance = 50;
+                    else
+                        failChance = 70;
+
+                    if (gBattleMons[gBattlerAttacker].status2 & STATUS2_INFATUATION)
+                        gBattleScripting.battler = CountTrailingZeroBits((gBattleMons[gBattlerAttacker].status2 & STATUS2_INFATUATION) >> 0x10);
+                    else
+                        gBattleScripting.battler = gBattlerAttacker;
+
+                    if ((Random() % 100) < failChance)
+                    {
+                        BattleScriptPush(BattleScript_MoveUsedIsInLoveCantAttack);
+                        gHitMarker |= HITMARKER_UNABLE_TO_USE_MOVE;
+                        gProtectStructs[gBattlerAttacker].loveImmobility = 1;
+                        CancelMultiTurnMoves(gBattlerAttacker);
+                    }
+                    else
+                    {
+                        BattleScriptPushCursor();
+                    }
+                    gBattlescriptCurrInstr = BattleScript_MoveUsedIsInLove;
+                    effect = 1;
                 }
-                else
-                {
-                    BattleScriptPush(BattleScript_MoveUsedIsInLoveCantAttack);
-                    gHitMarker |= HITMARKER_UNABLE_TO_USE_MOVE;
-                    gProtectStructs[gBattlerAttacker].loveImmobility = 1;
-                    CancelMultiTurnMoves(gBattlerAttacker);
-                }
-                gBattlescriptCurrInstr = BattleScript_MoveUsedIsInLove;
-                effect = 1;
             }
             gBattleStruct->atkCancelerTracker++;
             break;

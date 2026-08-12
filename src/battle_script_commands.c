@@ -1921,6 +1921,12 @@ static void Cmd_datahpupdate(void)
                 {
                     gBattleMons[gActiveBattler].hp -= gBattleMoveDamage;
                     gHpDealt = gBattleMoveDamage;
+                    // HACKROM: each damaging hit lowers infatuation level by 1
+                    {
+                        u8 lv = GetBattlerInfatuationLevel(gActiveBattler);
+                        if (lv > 0 && gBattleMoveDamage > 0)
+                            SetBattlerInfatuationLevel(gActiveBattler, lv - 1);
+                    }
                 }
                 else
                 {
@@ -7653,47 +7659,33 @@ static void Cmd_weatherdamage(void)
 
 static void Cmd_tryinfatuating(void)
 {
-    struct Pokemon *monAttacker, *monTarget;
-    u16 speciesAttacker, speciesTarget;
-    u32 personalityAttacker, personalityTarget;
-
-    if (GetBattlerSide(gBattlerAttacker) == B_SIDE_PLAYER)
-        monAttacker = &gPlayerParty[gBattlerPartyIndexes[gBattlerAttacker]];
-    else
-        monAttacker = &gEnemyParty[gBattlerPartyIndexes[gBattlerAttacker]];
-
-    if (GetBattlerSide(gBattlerTarget) == B_SIDE_PLAYER)
-        monTarget = &gPlayerParty[gBattlerPartyIndexes[gBattlerTarget]];
-    else
-        monTarget = &gEnemyParty[gBattlerPartyIndexes[gBattlerTarget]];
-
-    speciesAttacker = GetMonData(monAttacker, MON_DATA_SPECIES);
-    personalityAttacker = GetMonData(monAttacker, MON_DATA_PERSONALITY);
-
-    speciesTarget = GetMonData(monTarget, MON_DATA_SPECIES);
-    personalityTarget = GetMonData(monTarget, MON_DATA_PERSONALITY);
+    // HACKROM: Attract ignores gender; each use raises infatuation level by 1 (max 3)
+    u8 level;
 
     if (gBattleMons[gBattlerTarget].ability == ABILITY_OBLIVIOUS)
     {
         gBattlescriptCurrInstr = BattleScript_ObliviousPreventsAttraction;
         gLastUsedAbility = ABILITY_OBLIVIOUS;
         RecordAbilityBattle(gBattlerTarget, ABILITY_OBLIVIOUS);
+        return;
     }
-    else
+
+    level = GetBattlerInfatuationLevel(gBattlerTarget);
+    if (level >= 3)
     {
-        if (GetGenderFromSpeciesAndPersonality(speciesAttacker, personalityAttacker) == GetGenderFromSpeciesAndPersonality(speciesTarget, personalityTarget)
-            || gBattleMons[gBattlerTarget].status2 & STATUS2_INFATUATION
-            || GetGenderFromSpeciesAndPersonality(speciesAttacker, personalityAttacker) == MON_GENDERLESS
-            || GetGenderFromSpeciesAndPersonality(speciesTarget, personalityTarget) == MON_GENDERLESS)
-        {
-            gBattlescriptCurrInstr = T1_READ_PTR(gBattlescriptCurrInstr + 1);
-        }
-        else
-        {
-            gBattleMons[gBattlerTarget].status2 |= STATUS2_INFATUATED_WITH(gBattlerAttacker);
-            gBattlescriptCurrInstr += 5;
-        }
+        // Already maxed — treat as failed attract
+        gBattlescriptCurrInstr = T1_READ_PTR(gBattlescriptCurrInstr + 1);
+        return;
     }
+
+    level++;
+    SetBattlerInfatuationLevel(gBattlerTarget, level);
+    gBattleMons[gBattlerTarget].status2 |= STATUS2_INFATUATED_WITH(gBattlerAttacker);
+
+    // Stash new level for battle message selection (uses gBattleCommunication temporarily)
+    gBattleCommunication[MULTISTRING_CHOOSER] = level; // 1, 2 or 3 after increase
+
+    gBattlescriptCurrInstr += 5;
 }
 
 static void Cmd_updatestatusicon(void)
