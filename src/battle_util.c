@@ -5,6 +5,7 @@
 #include "battle_pyramid.h"
 #include "battle_util.h"
 #include "pokemon.h"
+#include "daycare.h"
 #include "international_string_util.h"
 #include "item.h"
 #include "util.h"
@@ -578,6 +579,36 @@ void HandleAction_SafariZoneBallThrow(void)
     gBattlerAttacker = gBattlerByTurnOrder[gCurrentTurnActionNumber];
     gBattle_BG0_X = 0;
     gBattle_BG0_Y = 0;
+
+    if (gDaycarePlayBattle)
+    {
+        // SEX: Pound-like damage; power uses opponent's Attack stat
+        u8 battler = GetBattlerAtPosition(B_POSITION_OPPONENT_LEFT);
+        u16 atk = gBattleMons[battler].attack;
+        u16 def = gBattleMons[battler].defense;
+        u16 dmg;
+        if (def == 0)
+            def = 1;
+        // Simplified Gen3-ish: damage ~= (2*level/5+2)*power*atk/def/50+2 with power=40 (Pound)
+        dmg = ((2 * gBattleMons[battler].level / 5 + 2) * 40 * atk / def) / 50 + 2;
+        if (dmg < 1)
+            dmg = 1;
+        if (gBattleMons[battler].hp > dmg)
+            gBattleMons[battler].hp -= dmg;
+        else
+        {
+            gBattleMons[battler].hp = 0;
+            gBattleOutcome = B_OUTCOME_MON_FAINTED;
+            gCurrentTurnActionNumber = gBattlersCount;
+            return;
+        }
+        // Reuse near script as feedback placeholder
+        gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_CREPT_CLOSER;
+        gBattlescriptCurrInstr = gBattlescriptsForSafariActions[1];
+        gCurrentActionFuncId = B_ACTION_EXEC_SCRIPT;
+        return;
+    }
+
     gNumSafariBalls--;
     gLastUsedItem = ITEM_SAFARI_BALL;
     gBattlescriptCurrInstr = gBattlescriptsForBallThrow[ITEM_SAFARI_BALL];
@@ -589,6 +620,24 @@ void HandleAction_ThrowPokeblock(void)
     gBattlerAttacker = gBattlerByTurnOrder[gCurrentTurnActionNumber];
     gBattle_BG0_X = 0;
     gBattle_BG0_Y = 0;
+
+    if (gDaycarePlayBattle)
+    {
+        // MUFFIN: +10 session friendship, heal 1/4 max HP
+        u8 battler = GetBattlerAtPosition(B_POSITION_OPPONENT_LEFT);
+        u16 heal;
+        gDaycareBattleSessionGain += 10;
+        heal = gBattleMons[battler].maxHP / 4;
+        if (heal == 0)
+            heal = 1;
+        gBattleMons[battler].hp += heal;
+        if (gBattleMons[battler].hp > gBattleMons[battler].maxHP)
+            gBattleMons[battler].hp = gBattleMons[battler].maxHP;
+        gBattlescriptCurrInstr = gBattlescriptsForSafariActions[2];
+        gCurrentActionFuncId = B_ACTION_EXEC_SCRIPT;
+        return;
+    }
+
     gBattleCommunication[MULTISTRING_CHOOSER] = gBattleBufferB[gBattlerAttacker][1] - 1;
     gLastUsedItem = gBattleBufferB[gBattlerAttacker][2];
 
@@ -598,7 +647,6 @@ void HandleAction_ThrowPokeblock(void)
         gBattleStruct->safariPkblThrowCounter++;
     if (gBattleStruct->safariEscapeFactor > 1)
     {
-        // BUG: safariEscapeFactor can become 0 below. This causes the pokeblock throw glitch.
         #ifdef BUGFIX
         if (gBattleStruct->safariEscapeFactor <= sPkblToEscapeFactor[gBattleStruct->safariPkblThrowCounter][gBattleCommunication[MULTISTRING_CHOOSER]])
         #else
@@ -618,6 +666,19 @@ void HandleAction_GoNear(void)
     gBattlerAttacker = gBattlerByTurnOrder[gCurrentTurnActionNumber];
     gBattle_BG0_X = 0;
     gBattle_BG0_Y = 0;
+
+    if (gDaycarePlayBattle)
+    {
+        // MUD: -10 session friendship, -1 Def stage
+        gDaycareBattleSessionGain -= 10;
+        if (gBattleMons[GetBattlerAtPosition(B_POSITION_OPPONENT_LEFT)].statStages[STAT_DEF] > 0)
+            gBattleMons[GetBattlerAtPosition(B_POSITION_OPPONENT_LEFT)].statStages[STAT_DEF]--;
+        // Reuse rock/near safari script for feedback
+        gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_CREPT_CLOSER;
+        gBattlescriptCurrInstr = gBattlescriptsForSafariActions[1];
+        gCurrentActionFuncId = B_ACTION_EXEC_SCRIPT;
+        return;
+    }
 
     gBattleStruct->safariCatchFactor += sGoNearCounterToCatchFactor[gBattleStruct->safariGoNearCounter];
     if (gBattleStruct->safariCatchFactor > 20)
@@ -643,6 +704,13 @@ void HandleAction_GoNear(void)
 void HandleAction_SafariZoneRun(void)
 {
     gBattlerAttacker = gBattlerByTurnOrder[gCurrentTurnActionNumber];
+    if (gDaycarePlayBattle)
+    {
+        // END: leave battle, keep session friendship
+        gCurrentTurnActionNumber = gBattlersCount;
+        gBattleOutcome = B_OUTCOME_RAN;
+        return;
+    }
     PlaySE(SE_FLEE);
     gCurrentTurnActionNumber = gBattlersCount;
     gBattleOutcome = B_OUTCOME_RAN;

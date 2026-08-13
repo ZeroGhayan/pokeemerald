@@ -2,6 +2,12 @@
 #include "pokemon.h"
 #include "rtc.h"
 #include "battle.h"
+#include "battle_setup.h"
+#include "overworld.h"
+#include "field_control_avatar.h"
+#include "event_object_movement.h"
+#include "safari_zone.h"
+#include "battle.h"
 #include "daycare.h"
 #include "string_util.h"
 #include "mail.h"
@@ -342,6 +348,87 @@ u8 Daycare_BreederCheck(void)
         Daycare_TriggerNormalEgg(daycare);
 
     return DAYCARE_BREEDER_EGG_FOUND;
+}
+
+
+// HACKROM: Lass Day-Care play battle
+bool8 gDaycarePlayBattle;
+s16 gDaycareBattleSessionGain; // friendship gained/lost this battle only
+
+
+void CB2_EndDaycareBattle(void)
+{
+    struct DayCare *daycare = &gSaveBlock1Ptr->daycare;
+    s16 total;
+    u8 gained;
+
+    gDaycarePlayBattle = FALSE;
+
+    // Apply session friendship (can be negative from MUD)
+    total = (s16)daycare->friendship + gDaycareBattleSessionGain;
+    if (total < 0)
+        total = 0;
+    if (total > 255)
+        total = 255;
+    daycare->friendship = (u8)total;
+
+    // Condom breaks if THIS battle gained >= 200
+    if (gDaycareBattleSessionGain >= 200 && Daycare_HasActiveCondom())
+    {
+        Daycare_BreakCondom();
+        gSpecialVar_Result = 1; // signal script: condom broke
+    }
+    else
+    {
+        gSpecialVar_Result = 0;
+    }
+
+    // EXP to deposited mon if opponent fainted
+    if (gBattleOutcome == B_OUTCOME_MON_FAINTED || gBattleOutcome == B_OUTCOME_PLAYER_WON)
+    {
+        // Minimal: give steps-based proxy exp via daycare steps boost
+        daycare->mons[0].steps += 100;
+    }
+
+    Daycare_IncrementBattlesToday();
+    gDaycareBattleSessionGain = 0;
+
+    UnlockPlayerFieldControls();
+    ScriptContext_Enable();
+    gMain.callback2 = CB2_ReturnToField;
+}
+
+void StartDaycareBattle(void)
+{
+    struct Pokemon clone;
+
+    gSpecialVar_Result = 0;
+
+    if (!Daycare_HasMon())
+    {
+        gSpecialVar_Result = 2; // no mon
+        return;
+    }
+    if (!Daycare_CanBattleToday())
+    {
+        gSpecialVar_Result = 3; // no battles left today
+        return;
+    }
+
+    // Full clone of deposited mon
+    BoxMonToMon(&gSaveBlock1Ptr->daycare.mons[0].mon, &clone);
+    gEnemyParty[0] = clone;
+    ZeroMonData(&gEnemyParty[1]);
+    ZeroMonData(&gEnemyParty[2]);
+    ZeroMonData(&gEnemyParty[3]);
+    ZeroMonData(&gEnemyParty[4]);
+    ZeroMonData(&gEnemyParty[5]);
+    CalculateEnemyPartyCount();
+
+    gDaycarePlayBattle = TRUE;
+    gDaycareBattleSessionGain = 0;
+
+    DoDaycareBattle();
 }
 
 u8 CountPokemonInDaycare(struct DayCare *daycare)

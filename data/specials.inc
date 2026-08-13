@@ -217,6 +217,7 @@ gSpecials::
 	def_special Daycare_CondomBrokeThisDeposit
 	def_special Daycare_BreakCondom
 	def_special Daycare_BreederCheck
+	def_special StartDaycareBattle
 	def_special ScriptHatchMon
 	def_special EggHatch, waitstate=1
 	def_special CheckDaycareMonReceivedMail

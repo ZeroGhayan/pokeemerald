@@ -5,6 +5,8 @@
 #include "main.h"
 #include "task.h"
 #include "safari_zone.h"
+#include "daycare.h"
+#include "pokemon.h"
 #include "script.h"
 #include "event_data.h"
 #include "metatile_behavior.h"
@@ -438,6 +440,17 @@ static void DoSafariBattle(void)
     FreezeObjectEvents();
     StopPlayerAvatar();
     gMain.savedCallback = CB2_EndSafariBattle;
+    gBattleTypeFlags = BATTLE_TYPE_SAFARI;
+    CreateBattleStartTask(GetWildBattleTransition(), 0);
+}
+
+// HACKROM: Lass Day-Care battle (Safari UI, custom actions)
+void DoDaycareBattle(void)
+{
+    LockPlayerFieldControls();
+    FreezeObjectEvents();
+    StopPlayerAvatar();
+    gMain.savedCallback = CB2_EndDaycareBattle;
     gBattleTypeFlags = BATTLE_TYPE_SAFARI;
     CreateBattleStartTask(GetWildBattleTransition(), 0);
 }
