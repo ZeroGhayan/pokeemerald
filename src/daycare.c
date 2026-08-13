@@ -123,6 +123,7 @@ static void Daycare_RefreshBattleDay(struct DayCare *daycare)
     {
         daycare->lastDay = gLocalTime.days;
         daycare->battlesToday = 0;
+        daycare->hackFlags &= ~DAYCARE_HACK_FLAG_BREEDER_CHECKED;
     }
 }
 
@@ -189,6 +190,158 @@ void Daycare_BreakCondom(void)
         return;
     SetBoxMonData(&gSaveBlock1Ptr->daycare.mons[0].mon, MON_DATA_HELD_ITEM, &none);
     gSaveBlock1Ptr->daycare.hackFlags |= DAYCARE_HACK_FLAG_CONDOM_BROKE;
+}
+
+
+// HACKROM: Breeder daily check + single-parent egg
+static u8 Daycare_PickNatureBoostingSpecies(u16 species)
+{
+    // Pick a nature that boosts the highest non-HP base stat and cuts the lowest.
+    u8 bases[5];
+    u8 i, best, worst;
+    u8 nature;
+
+    bases[0] = gSpeciesInfo[species].baseAttack;
+    bases[1] = gSpeciesInfo[species].baseDefense;
+    bases[2] = gSpeciesInfo[species].baseSpeed;
+    bases[3] = gSpeciesInfo[species].baseSpAttack;
+    bases[4] = gSpeciesInfo[species].baseSpDefense;
+
+    best = 0;
+    worst = 0;
+    for (i = 1; i < 5; i++)
+    {
+        if (bases[i] > bases[best])
+            best = i;
+        if (bases[i] < bases[worst])
+            worst = i;
+    }
+    if (best == worst)
+        return Random() % NUM_NATURES;
+
+    // Natures 0-24; gNatureStatTable[nature][stat] is -1, 0, or +1 for Atk..SpDef (no HP)
+    for (nature = 0; nature < NUM_NATURES; nature++)
+    {
+        if (gNatureStatTable[nature][best] > 0 && gNatureStatTable[nature][worst] < 0)
+            return nature;
+    }
+    return Random() % NUM_NATURES;
+}
+
+static void Daycare_TriggerSpecialEgg(struct DayCare *daycare)
+{
+    u32 personality;
+    u8 nature;
+    u16 species;
+    u16 tries = 0;
+    bool8 wantShiny = (Random() % 100) < 45;
+    u32 otId = gSaveBlock2Ptr->playerTrainerId[0] | (gSaveBlock2Ptr->playerTrainerId[1] << 8)
+             | (gSaveBlock2Ptr->playerTrainerId[2] << 16) | (gSaveBlock2Ptr->playerTrainerId[3] << 24);
+
+    species = GetEggSpecies(GetBoxMonData(&daycare->mons[0].mon, MON_DATA_SPECIES, NULL));
+    nature = Daycare_PickNatureBoostingSpecies(species);
+
+    // Personality: match nature; optional shiny; prefer female when possible
+    do
+    {
+        personality = (Random() << 16) | Random();
+        if (personality == 0)
+            continue;
+        if (GetNatureFromPersonality(personality) != nature)
+            continue;
+        if (wantShiny)
+        {
+            // shiny if OTID xor PID has low upper bits (Gen 3 method)
+            u32 shinyVal = otId ^ personality;
+            if (((shinyVal ^ (shinyVal >> 16)) & 0xFFFF) >= 8)
+                continue;
+        }
+        // Prefer female if species is not fixed-gender
+        if (gSpeciesInfo[species].genderRatio != MON_MALE
+         && gSpeciesInfo[species].genderRatio != MON_GENDERLESS
+         && gSpeciesInfo[species].genderRatio != MON_FEMALE)
+        {
+            if (GetGenderFromSpeciesAndPersonality(species, personality) != MON_FEMALE)
+                continue;
+        }
+        break;
+    } while (++tries < 5000);
+
+    if (tries >= 5000)
+        personality = (Random() << 16) | (Random() % 0xFFFE + 1);
+
+    daycare->offspringPersonality = personality;
+    FlagSet(FLAG_PENDING_DAYCARE_EGG);
+
+    // Mark special egg in steps of slot1 (unused) high byte as signal for IV boost on give
+    daycare->mons[1].steps = 0xC0FFEE; // sentinel: special IV treatment
+}
+
+static void Daycare_TriggerNormalEgg(struct DayCare *daycare)
+{
+    u32 personality;
+    u16 species;
+    u16 tries = 0;
+
+    species = GetEggSpecies(GetBoxMonData(&daycare->mons[0].mon, MON_DATA_SPECIES, NULL));
+    do
+    {
+        personality = (Random() << 16) | Random();
+        if (personality == 0)
+            continue;
+        if (gSpeciesInfo[species].genderRatio != MON_MALE
+         && gSpeciesInfo[species].genderRatio != MON_GENDERLESS
+         && gSpeciesInfo[species].genderRatio != MON_FEMALE)
+        {
+            if (GetGenderFromSpeciesAndPersonality(species, personality) != MON_FEMALE)
+                continue;
+        }
+        break;
+    } while (++tries < 2000);
+
+    if (tries >= 2000)
+        personality = (Random() << 16) | ((Random() % 0xFFFE) + 1);
+
+    daycare->offspringPersonality = personality;
+    daycare->mons[1].steps = 0; // not special
+    FlagSet(FLAG_PENDING_DAYCARE_EGG);
+}
+
+// Returns VAR_RESULT code for Breeder script
+u8 Daycare_BreederCheck(void)
+{
+    struct DayCare *daycare = &gSaveBlock1Ptr->daycare;
+    u8 friendship;
+
+    Daycare_RefreshBattleDay(daycare);
+
+    // Priority: egg waiting to be collected
+    if (FlagGet(FLAG_PENDING_DAYCARE_EGG))
+        return DAYCARE_BREEDER_EGG_WAITING;
+
+    if (!Daycare_HasMon())
+        return DAYCARE_BREEDER_NO_MON;
+
+    if (daycare->hackFlags & DAYCARE_HACK_FLAG_BREEDER_CHECKED)
+        return DAYCARE_BREEDER_ALREADY_CHECKED;
+
+    // Consume today's check
+    daycare->hackFlags |= DAYCARE_HACK_FLAG_BREEDER_CHECKED;
+
+    if (Daycare_HasActiveCondom())
+        return DAYCARE_BREEDER_CONDOM_BLOCKED;
+
+    friendship = daycare->friendship;
+    // rand(0..255) < friendship
+    if ((Random() & 0xFF) >= friendship)
+        return DAYCARE_BREEDER_NOTHING;
+
+    if (Daycare_CondomBrokeThisDeposit())
+        Daycare_TriggerSpecialEgg(daycare);
+    else
+        Daycare_TriggerNormalEgg(daycare);
+
+    return DAYCARE_BREEDER_EGG_FOUND;
 }
 
 u8 CountPokemonInDaycare(struct DayCare *daycare)
@@ -917,12 +1070,49 @@ static void _GiveEggFromDaycare(struct DayCare *daycare)
     u16 species;
     u8 parentSlots[DAYCARE_MON_COUNT];
     bool8 isEgg;
+    bool8 specialEgg = (daycare->mons[1].steps == 0xC0FFEE);
 
-    species = DetermineEggSpeciesAndParentSlots(daycare, parentSlots);
+    // HACKROM: single-parent Day-Care (slot 0 mother only)
+    parentSlots[0] = 0;
+    parentSlots[1] = 0;
+    species = GetEggSpecies(GetBoxMonData(&daycare->mons[0].mon, MON_DATA_SPECIES, NULL));
+    // Nidoran / Illumise gender forms from personality
+    if (species == SPECIES_NIDORAN_F && (daycare->offspringPersonality & EGG_GENDER_MALE))
+        species = SPECIES_NIDORAN_M;
+    if (species == SPECIES_ILLUMISE && (daycare->offspringPersonality & EGG_GENDER_MALE))
+        species = SPECIES_VOLBEAT;
+
     AlterEggSpeciesWithIncenseItem(&species, daycare);
     SetInitialEggData(&egg, species, daycare);
-    InheritIVs(&egg, daycare);
-    BuildEggMoveset(&egg, &daycare->mons[parentSlots[1]].mon, &daycare->mons[parentSlots[0]].mon);
+
+    if (specialEgg)
+    {
+        // At least 4 IVs at 31
+        u8 ivs[NUM_STATS];
+        u8 chosen[NUM_STATS] = {0};
+        u8 i, n, stat;
+        for (i = 0; i < NUM_STATS; i++)
+            ivs[i] = Random() % 32;
+        for (n = 0; n < 4; n++)
+        {
+            do { stat = Random() % NUM_STATS; } while (chosen[stat]);
+            chosen[stat] = TRUE;
+            ivs[stat] = 31;
+        }
+        SetMonData(&egg, MON_DATA_HP_IV, &ivs[0]);
+        SetMonData(&egg, MON_DATA_ATK_IV, &ivs[1]);
+        SetMonData(&egg, MON_DATA_DEF_IV, &ivs[2]);
+        SetMonData(&egg, MON_DATA_SPEED_IV, &ivs[3]);
+        SetMonData(&egg, MON_DATA_SPATK_IV, &ivs[4]);
+        SetMonData(&egg, MON_DATA_SPDEF_IV, &ivs[5]);
+        daycare->mons[1].steps = 0;
+    }
+    else
+    {
+        InheritIVs(&egg, daycare);
+    }
+
+    BuildEggMoveset(&egg, &daycare->mons[0].mon, &daycare->mons[0].mon);
 
     if (species == SPECIES_PICHU)
         GiveVoltTackleIfLightBall(&egg, daycare);

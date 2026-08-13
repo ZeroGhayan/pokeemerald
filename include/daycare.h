@@ -35,6 +35,7 @@ bool8 Daycare_HasMon(void);
 bool8 Daycare_HasActiveCondom(void);
 bool8 Daycare_CondomBrokeThisDeposit(void);
 void Daycare_BreakCondom(void);
+u8 Daycare_BreederCheck(void);
 void SetDaycareCompatibilityString(void);
 bool8 NameHasGenderSymbol(const u8 *name, u8 genderRatio);
 void ShowDaycareLevelMenu(void);
