@@ -38,6 +38,7 @@
 #include "recorded_battle.h"
 #include "roamer.h"
 #include "safari_zone.h"
+#include "daycare.h"
 #include "scanline_effect.h"
 #include "sound.h"
 #include "sprite.h"
@@ -3113,7 +3114,11 @@ static void BattleStartClearSetData(void)
     gBattleStruct->safariGoNearCounter = 0;
     gBattleStruct->safariPkblThrowCounter = 0;
     *(&gBattleStruct->safariCatchFactor) = gSpeciesInfo[GetMonData(&gEnemyParty[0], MON_DATA_SPECIES)].catchRate * 100 / 1275;
-    gBattleStruct->safariEscapeFactor = 3;
+    // HACKROM: Day-Care play mon never flees
+    if (gDaycarePlayBattle)
+        gBattleStruct->safariEscapeFactor = 0;
+    else
+        gBattleStruct->safariEscapeFactor = 3;
     gBattleStruct->wildVictorySong = 0;
     gBattleStruct->moneyMultiplier = 1;
 

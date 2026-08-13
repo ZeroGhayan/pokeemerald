@@ -14,6 +14,7 @@
 #include "pokeball.h"
 #include "pokeblock.h"
 #include "pokemon.h"
+#include "daycare.h"
 #include "reshow_battle_screen.h"
 #include "sound.h"
 #include "task.h"
@@ -451,7 +452,11 @@ static void SafariHandleChooseAction(void)
     s32 i;
 
     gBattlerControllerFuncs[gActiveBattler] = HandleChooseActionAfterDma3;
-    BattlePutTextOnWindow(gText_SafariZoneMenu, B_WIN_ACTION_MENU);
+    // HACKROM: Day-Care play uses MUD/SEX/MUFFIN/END labels
+    if (gDaycarePlayBattle)
+        BattlePutTextOnWindow(gText_DaycarePlayMenu, B_WIN_ACTION_MENU);
+    else
+        BattlePutTextOnWindow(gText_SafariZoneMenu, B_WIN_ACTION_MENU);
 
     for (i = 0; i < 4; i++)
         ActionSelectionDestroyCursorAt(i);

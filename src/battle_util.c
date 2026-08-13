@@ -6,6 +6,7 @@
 #include "battle_util.h"
 #include "pokemon.h"
 #include "daycare.h"
+#include "battle_interface.h"
 #include "international_string_util.h"
 #include "item.h"
 #include "util.h"
@@ -600,8 +601,10 @@ void HandleAction_SafariZoneBallThrow(void)
             gBattleMons[battler].hp = 0;
             gBattleOutcome = B_OUTCOME_MON_FAINTED;
             gCurrentTurnActionNumber = gBattlersCount;
+            UpdateHealthboxAttribute(gHealthboxSpriteIds[battler], &gEnemyParty[0], HEALTHBOX_HP);
             return;
         }
+        UpdateHealthboxAttribute(gHealthboxSpriteIds[battler], &gEnemyParty[0], HEALTHBOX_HP);
         // Reuse near script as feedback placeholder
         gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_CREPT_CLOSER;
         gBattlescriptCurrInstr = gBattlescriptsForSafariActions[1];
@@ -633,6 +636,7 @@ void HandleAction_ThrowPokeblock(void)
         gBattleMons[battler].hp += heal;
         if (gBattleMons[battler].hp > gBattleMons[battler].maxHP)
             gBattleMons[battler].hp = gBattleMons[battler].maxHP;
+        UpdateHealthboxAttribute(gHealthboxSpriteIds[battler], &gEnemyParty[0], HEALTHBOX_HP);
         gBattlescriptCurrInstr = gBattlescriptsForSafariActions[2];
         gCurrentActionFuncId = B_ACTION_EXEC_SCRIPT;
         return;
