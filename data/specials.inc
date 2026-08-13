@@ -555,3 +555,11 @@ gSpecials::
 	def_special Special_BattleCupIsFinal
 	def_special Special_BattleCupGetBattleNum
 	def_special Special_BattleCupGetRematches
+	def_special Special_BattleCupSetSelectedFromVars
+	def_special Special_BattleCupApplySelectedParty
+	def_special Special_BattleCupRestoreParty
+	def_special Special_BattleCupOnBattleWon
+	def_special Special_BattleCupOnBattleLost
+	def_special Special_BattleCupTryRematch
+	def_special Special_BattleCupIsChampion
+	def_special Special_BattleCupIsRound2Cleared

@@ -40,5 +40,13 @@ void Special_BattleCupValidateSelected(void);
 void Special_BattleCupIsFinal(void);
 void Special_BattleCupGetBattleNum(void);
 void Special_BattleCupGetRematches(void);
+void Special_BattleCupSetSelectedFromVars(void);
+void Special_BattleCupApplySelectedParty(void);
+void Special_BattleCupRestoreParty(void);
+void Special_BattleCupOnBattleWon(void);
+void Special_BattleCupOnBattleLost(void);
+void Special_BattleCupTryRematch(void);
+void Special_BattleCupIsChampion(void);
+void Special_BattleCupIsRound2Cleared(void);
 
 #endif // GUARD_BATTLE_CUPS_H

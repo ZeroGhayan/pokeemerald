@@ -2,6 +2,9 @@
 #include "battle_cups.h"
 #include "event_data.h"
 #include "party_menu.h"
+#include "string_util.h"
+#include "script_pokemon_util.h"
+#include "load_save.h"
 #include "pokemon.h"
 #include "constants/species.h"
 #include "constants/moves.h"
@@ -413,4 +416,77 @@ void Special_BattleCupGetBattleNum(void)
 void Special_BattleCupGetRematches(void)
 {
     gSpecialVar_Result = gBattleCupState.rematchesLeft;
+}
+
+// ---- Step 3: select 3 / apply party / win-lose / rematch ----
+
+// Script sets VAR_0x8000/01/02 to party indices (0-based).
+// Copies into gBattleCupState.selectedSlots and validates.
+void Special_BattleCupSetSelectedFromVars(void)
+{
+    u8 i;
+    gBattleCupState.selectedSlots[0] = VarGet(VAR_0x8000);
+    gBattleCupState.selectedSlots[1] = VarGet(VAR_0x8001);
+    gBattleCupState.selectedSlots[2] = VarGet(VAR_0x8002);
+
+    // Reject duplicate slots
+    if (gBattleCupState.selectedSlots[0] == gBattleCupState.selectedSlots[1]
+     || gBattleCupState.selectedSlots[0] == gBattleCupState.selectedSlots[2]
+     || gBattleCupState.selectedSlots[1] == gBattleCupState.selectedSlots[2])
+    {
+        gSpecialVar_Result = BATTLE_CUP_VALID_FAIL_GENERIC;
+        return;
+    }
+
+    gSpecialVar_Result = BattleCup_ValidateSelectedThree();
+}
+
+// Backup full party, shrink to the 3 selected (Frontier-style, 1-based order array).
+void Special_BattleCupApplySelectedParty(void)
+{
+    u8 i;
+    SavePlayerParty();
+    for (i = 0; i < BATTLE_CUP_PARTY_SIZE; i++)
+        gSelectedOrderFromParty[i] = gBattleCupState.selectedSlots[i] + 1;
+    for (; i < MAX_FRONTIER_PARTY_SIZE; i++)
+        gSelectedOrderFromParty[i] = 0;
+    ReducePlayerPartyToSelectedMons();
+    gSpecialVar_Result = 0;
+}
+
+void Special_BattleCupRestoreParty(void)
+{
+    LoadPlayerParty();
+    CalculatePlayerPartyCount();
+    gSpecialVar_Result = 0;
+}
+
+// VAR_0x8000 = 1 if perfect (no player mon fainted this battle)
+void Special_BattleCupOnBattleWon(void)
+{
+    bool8 perfect = (VarGet(VAR_0x8000) != 0);
+    BattleCup_OnBattleWon(perfect);
+    gSpecialVar_Result = gBattleCupState.status; // ACTIVE or WON
+}
+
+void Special_BattleCupOnBattleLost(void)
+{
+    BattleCup_OnBattleLost();
+    // Result: TRUE if rematch available
+    gSpecialVar_Result = (!gBattleCupState.isRound2 && gBattleCupState.rematchesLeft > 0);
+}
+
+void Special_BattleCupTryRematch(void)
+{
+    gSpecialVar_Result = BattleCup_TryUseRematch();
+}
+
+void Special_BattleCupIsChampion(void)
+{
+    gSpecialVar_Result = BattleCup_IsChampion(VarGet(VAR_BATTLE_CUP_ID));
+}
+
+void Special_BattleCupIsRound2Cleared(void)
+{
+    gSpecialVar_Result = BattleCup_IsRound2Cleared(VarGet(VAR_BATTLE_CUP_ID));
 }
