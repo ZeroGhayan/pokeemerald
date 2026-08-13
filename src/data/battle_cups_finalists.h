@@ -1,0 +1,118 @@
+#ifndef GUARD_DATA_BATTLE_CUPS_FINALISTS_H
+#define GUARD_DATA_BATTLE_CUPS_FINALISTS_H
+
+#include "constants/species.h"
+#include "constants/moves.h"
+#include "constants/trainers.h"
+
+// HACKROM: Stadium-style fixed finalist pools
+// First entry is ALWAYS included on the final team of 3.
+
+struct BattleCupFinalMon
+{
+    u16 species;
+    u8 level;
+    u16 moves[4];
+};
+
+struct BattleCupFinalist
+{
+    const u8 *name;
+    u8 facilityClass; // sprite / trainer class look
+    const struct BattleCupFinalMon *pool;
+    u8 poolSize;
+};
+
+// ---- Poké Cup Master Ball: Gentleman NICK ----
+static const struct BattleCupFinalMon sPokeCupFinalPool[] =
+{
+    { SPECIES_DRAGONITE, 55, { MOVE_TAKE_DOWN, MOVE_SURF, MOVE_DRAGON_RAGE, MOVE_THUNDER_WAVE } }, // fixed
+    { SPECIES_ARTICUNO,  50, { MOVE_BLIZZARD, MOVE_SKY_ATTACK, MOVE_DOUBLE_EDGE, MOVE_REFLECT } },
+    { SPECIES_MOLTRES,   50, { MOVE_FIRE_BLAST, MOVE_FLY, MOVE_SWIFT, MOVE_DOUBLE_TEAM } },
+    { SPECIES_JOLTEON,   50, { MOVE_THUNDERBOLT, MOVE_PIN_MISSILE, MOVE_QUICK_ATTACK, MOVE_THUNDER_WAVE } },
+    { SPECIES_TAUROS,    50, { MOVE_STRENGTH, MOVE_FIRE_BLAST, MOVE_THUNDER, MOVE_BIDE } },
+    { SPECIES_LAPRAS,    55, { MOVE_SURF, MOVE_ICE_BEAM, MOVE_SING, MOVE_MIST } },
+    { SPECIES_ARCANINE,  50, { MOVE_FLAMETHROWER, MOVE_DIG, MOVE_DOUBLE_EDGE, MOVE_DRAGON_RAGE } },
+    { SPECIES_PINSIR,    50, { MOVE_SLASH, MOVE_SUBMISSION, MOVE_SEISMIC_TOSS, MOVE_DOUBLE_TEAM } },
+    { SPECIES_ELECTRODE, 50, { MOVE_THUNDERBOLT, MOVE_HYPER_BEAM, MOVE_REFLECT, MOVE_THUNDER_WAVE } },
+    { SPECIES_SNORLAX,   55, { MOVE_STRENGTH, MOVE_EARTHQUAKE, MOVE_PSYCHIC, MOVE_AMNESIA } },
+};
+
+// ---- Pika Cup: Fisherman REMY ----
+static const struct BattleCupFinalMon sPikaCupFinalPool[] =
+{
+    { SPECIES_DRAGONAIR, 20, { MOVE_DRAGON_RAGE, MOVE_THUNDER_WAVE, MOVE_DOUBLE_TEAM, MOVE_WRAP } }, // fixed
+    { SPECIES_SLOWBRO,   15, { MOVE_PSYCHIC, MOVE_SURF, MOVE_TRI_ATTACK, MOVE_DISABLE } },
+    { SPECIES_CLEFABLE,  15, { MOVE_HYPER_BEAM, MOVE_DOUBLE_EDGE, MOVE_THUNDERBOLT, MOVE_METRONOME } },
+    { SPECIES_TENTACOOL, 15, { MOVE_SURF, MOVE_MEGA_DRAIN, MOVE_SUPERSONIC, MOVE_WRAP } },
+    { SPECIES_RATICATE,  20, { MOVE_HYPER_FANG, MOVE_QUICK_ATTACK, MOVE_BUBBLE_BEAM, MOVE_DIG } },
+    { SPECIES_GOLDUCK,   15, { MOVE_SURF, MOVE_ICE_BEAM, MOVE_DIG, MOVE_MEGA_KICK } },
+    { SPECIES_KANGASKHAN,15, { MOVE_EARTHQUAKE, MOVE_SURF, MOVE_BLIZZARD, MOVE_MEGA_PUNCH } },
+    { SPECIES_GOLEM,     15, { MOVE_DIG, MOVE_EXPLOSION, MOVE_DOUBLE_EDGE, MOVE_METRONOME } },
+    { SPECIES_ALAKAZAM,  20, { MOVE_PSYCHIC, MOVE_REFLECT, MOVE_THUNDER_WAVE, MOVE_DOUBLE_TEAM } },
+    { SPECIES_MACHAMP,   15, { MOVE_SUBMISSION, MOVE_LOW_KICK, MOVE_EARTHQUAKE, MOVE_KARATE_CHOP } },
+    { SPECIES_STARMIE,   15, { MOVE_SURF, MOVE_ICE_BEAM, MOVE_THUNDERBOLT, MOVE_THUNDER_WAVE } },
+};
+
+// ---- Petit Cup: Pokémaniac ADAM ----
+static const struct BattleCupFinalMon sPetitCupFinalPool[] =
+{
+    { SPECIES_DRATINI,   30, { MOVE_DRAGON_RAGE, MOVE_WRAP, MOVE_ICE_BEAM, MOVE_TOXIC } }, // fixed
+    { SPECIES_OMANYTE,   30, { MOVE_SURF, MOVE_DOUBLE_EDGE, MOVE_BLIZZARD, MOVE_DOUBLE_TEAM } },
+    { SPECIES_FARFETCHD, 25, { MOVE_FLY, MOVE_SWORDS_DANCE, MOVE_BODY_SLAM, MOVE_TOXIC } },
+    { SPECIES_SANDSHREW, 25, { MOVE_EARTHQUAKE, MOVE_SLASH, MOVE_ROCK_SLIDE, MOVE_SAND_ATTACK } },
+    { SPECIES_PSYDUCK,   25, { MOVE_SURF, MOVE_BODY_SLAM, MOVE_BLIZZARD, MOVE_SEISMIC_TOSS } },
+    { SPECIES_NIDORAN_M, 25, { MOVE_POISON_STING, MOVE_HORN_ATTACK, MOVE_DOUBLE_KICK, MOVE_HORN_DRILL } },
+    { SPECIES_NIDORAN_F, 25, { MOVE_TAKE_DOWN, MOVE_BIDE, MOVE_TAIL_WHIP, MOVE_TOXIC } },
+    { SPECIES_VOLTORB,   25, { MOVE_THUNDERBOLT, MOVE_THUNDER_WAVE, MOVE_TOXIC, MOVE_EXPLOSION } },
+};
+
+// ---- Prime Cup Master Ball: Cooltrainer CHRIS ----
+static const struct BattleCupFinalMon sPrimeCupFinalPool[] =
+{
+    { SPECIES_MEW,       100, { MOVE_PSYCHIC, MOVE_SOFT_BOILED, MOVE_TRI_ATTACK, MOVE_ATTRACT } }, // fixed
+    { SPECIES_STARMIE,   100, { MOVE_SURF, MOVE_RECOVER, MOVE_ICE_BEAM, MOVE_SWIFT } },
+    { SPECIES_EXEGGUTOR, 100, { MOVE_PSYCHIC, MOVE_LEECH_SEED, MOVE_MEGA_DRAIN, MOVE_EXPLOSION } },
+    { SPECIES_TAUROS,    100, { MOVE_BODY_SLAM, MOVE_BLIZZARD, MOVE_EARTHQUAKE, MOVE_FIRE_BLAST } },
+    { SPECIES_RHYDON,    100, { MOVE_EARTHQUAKE, MOVE_FIRE_BLAST, MOVE_ROCK_SLIDE, MOVE_SURF } },
+    { SPECIES_JOLTEON,   100, { MOVE_THUNDERBOLT, MOVE_REFLECT, MOVE_THUNDER_WAVE, MOVE_HYPER_BEAM } },
+    { SPECIES_SNORLAX,   100, { MOVE_DOUBLE_EDGE, MOVE_REFLECT, MOVE_THUNDER, MOVE_REST } },
+    { SPECIES_CLOYSTER,  100, { MOVE_ICE_BEAM, MOVE_TAKE_DOWN, MOVE_SURF, MOVE_TOXIC } },
+    { SPECIES_ELECTRODE, 100, { MOVE_THUNDERBOLT, MOVE_FLASH, MOVE_THUNDER_WAVE, MOVE_HYPER_BEAM } },
+    { SPECIES_ARCANINE,  100, { MOVE_FIRE_BLAST, MOVE_AGILITY, MOVE_DIG, MOVE_HYPER_BEAM } },
+};
+
+static const u8 sName_Nick[] = _("NICK");
+static const u8 sName_Remy[] = _("REMY");
+static const u8 sName_Adam[] = _("ADAM");
+static const u8 sName_Chris[] = _("CHRIS");
+
+static const struct BattleCupFinalist sBattleCupFinalists[BATTLE_CUP_COUNT] =
+{
+    [BATTLE_CUP_POKE] = {
+        .name = sName_Nick,
+        .facilityClass = FACILITY_CLASS_GENTLEMAN,
+        .pool = sPokeCupFinalPool,
+        .poolSize = ARRAY_COUNT(sPokeCupFinalPool),
+    },
+    [BATTLE_CUP_PIKA] = {
+        .name = sName_Remy,
+        .facilityClass = FACILITY_CLASS_FISHERMAN,
+        .pool = sPikaCupFinalPool,
+        .poolSize = ARRAY_COUNT(sPikaCupFinalPool),
+    },
+    [BATTLE_CUP_PETIT] = {
+        .name = sName_Adam,
+        .facilityClass = FACILITY_CLASS_POKEMANIAC,
+        .pool = sPetitCupFinalPool,
+        .poolSize = ARRAY_COUNT(sPetitCupFinalPool),
+    },
+    [BATTLE_CUP_PRIME] = {
+        .name = sName_Chris,
+        .facilityClass = FACILITY_CLASS_COOLTRAINER_M,
+        .pool = sPrimeCupFinalPool,
+        .poolSize = ARRAY_COUNT(sPrimeCupFinalPool),
+    },
+};
+
+#endif // GUARD_DATA_BATTLE_CUPS_FINALISTS_H

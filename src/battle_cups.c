@@ -501,6 +501,75 @@ static u16 BattleCup_PickSpecies(u8 cupId, const u16 *already, u8 alreadyCount)
 }
 
 // Fills gEnemyParty with 3 legal mons. Returns synthetic trainer id for no-repeat tracking.
+
+static void BattleCup_CreateFinalMon(struct Pokemon *mon, const struct BattleCupFinalMon *def)
+{
+    u8 i;
+    CreateMon(mon, def->species, def->level, 31, FALSE, 0, OT_ID_RANDOM_NO_SHINY, 0);
+    for (i = 0; i < MAX_MON_MOVES; i++)
+        SetMonMoveSlot(mon, def->moves[i], i);
+}
+
+// Builds final team: pool[0] always + 2 random unique; order shuffled.
+u16 BattleCup_GenerateFinalOpponent(void)
+{
+    const struct BattleCupFinalist *fin;
+    u8 pick[BATTLE_CUP_PARTY_SIZE];
+    u8 order[BATTLE_CUP_PARTY_SIZE];
+    u8 used[16] = {0};
+    u8 i, j, tmp, slot;
+    u16 trainerId;
+
+    fin = &sBattleCupFinalists[gBattleCupState.cupId];
+    ZeroEnemyPartyMons();
+
+    // Always take index 0
+    pick[0] = 0;
+    used[0] = TRUE;
+
+    // Two more from 1..poolSize-1
+    for (i = 1; i < BATTLE_CUP_PARTY_SIZE; i++)
+    {
+        u16 tries = 0;
+        do {
+            slot = 1 + (Random() % (fin->poolSize - 1));
+            tries++;
+        } while (used[slot] && tries < 64);
+
+        if (used[slot])
+        {
+            for (slot = 1; slot < fin->poolSize; slot++)
+            {
+                if (!used[slot])
+                    break;
+            }
+        }
+        used[slot] = TRUE;
+        pick[i] = slot;
+    }
+
+    // Shuffle order so fixed mon can be 1st/2nd/3rd
+    order[0] = 0;
+    order[1] = 1;
+    order[2] = 2;
+    for (i = 0; i < BATTLE_CUP_PARTY_SIZE; i++)
+    {
+        j = Random() % BATTLE_CUP_PARTY_SIZE;
+        tmp = order[i];
+        order[i] = order[j];
+        order[j] = tmp;
+    }
+
+    for (i = 0; i < BATTLE_CUP_PARTY_SIZE; i++)
+        BattleCup_CreateFinalMon(&gEnemyParty[i], &fin->pool[pick[order[i]]]);
+
+    // Buffer name for scripts (StringVar1)
+    StringCopy(gStringVar1, fin->name);
+
+    trainerId = 9000 + gBattleCupState.cupId; // stable per-cup final id
+    return trainerId;
+}
+
 u16 BattleCup_GenerateRandomOpponent(void)
 {
     u8 cupId = gBattleCupState.cupId;
@@ -561,9 +630,8 @@ void Special_BattleCupSetupOpponent(void)
 
     if (BattleCup_IsFinalBattle())
     {
-        // Step 5 will implement fixed finals; for now also random
-        trainerId = BattleCup_GenerateRandomOpponent();
-        gSpecialVar_Result = 1; // signal final (script can branch later)
+        trainerId = BattleCup_GenerateFinalOpponent();
+        gSpecialVar_Result = 1; // final battle
     }
     else
     {
@@ -571,7 +639,7 @@ void Special_BattleCupSetupOpponent(void)
         gSpecialVar_Result = 0;
     }
 
-    VarSet(VAR_TEMP_0, trainerId); // script may store for RegisterDefeated
+    VarSet(VAR_TEMP_0, trainerId);
     gTrainerBattleOpponent_A = trainerId;
 }
 

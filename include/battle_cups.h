@@ -49,6 +49,7 @@ void Special_BattleCupTryRematch(void);
 void Special_BattleCupIsChampion(void);
 void Special_BattleCupIsRound2Cleared(void);
 u16 BattleCup_GenerateRandomOpponent(void);
+u16 BattleCup_GenerateFinalOpponent(void);
 void BattleCup_RegisterDefeatedTrainer(u16 trainerId);
 void Special_BattleCupSetupOpponent(void);
 void Special_BattleCupRegisterDefeated(void);
