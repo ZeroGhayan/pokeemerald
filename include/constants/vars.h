@@ -264,7 +264,13 @@
 #define VAR_ROXANNE_CALL_STEP_COUNTER                    0x40F4
 #define VAR_SCOTT_BF_CALL_STEP_COUNTER                   0x40F5
 #define VAR_RIVAL_RAYQUAZA_CALL_STEP_COUNTER             0x40F6
-#define VAR_UNUSED_0x40F7                                0x40F7 // Unused Var
+#define VAR_BATTLE_CUP_ID                               0x40F7 // current cup
+#define VAR_BATTLE_CUP_RANK                             0x40F8 // current rank
+#define VAR_BATTLE_CUP_BATTLE_NUM                       0x40F9 // 0-7
+#define VAR_BATTLE_CUP_REMATCHES                        0x40FA // remaining rematches
+#define VAR_BATTLE_CUP_IS_R2                            0x40FB // 0=R1, 1=R2
+#define VAR_BATTLE_CUP_STATUS                           0x40FC // challenge status
+#define VAR_UNUSED_0x40FD                                0x40FD // Unused Var
 #define VAR_UNUSED_0x40F8                                0x40F8 // Unused Var
 #define VAR_UNUSED_0x40F9                                0x40F9 // Unused Var
 #define VAR_UNUSED_0x40FA                                0x40FA // Unused Var

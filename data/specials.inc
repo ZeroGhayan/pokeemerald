@@ -549,3 +549,8 @@ gSpecials::
 	def_special RemoveRecordsWindow
 	def_special CloseDeptStoreElevatorWindow
 	def_special TrySetBattleTowerLinkType
+	def_special Special_BattleCupInit
+	def_special Special_BattleCupValidateParty
+	def_special Special_BattleCupIsFinal
+	def_special Special_BattleCupGetBattleNum
+	def_special Special_BattleCupGetRematches
