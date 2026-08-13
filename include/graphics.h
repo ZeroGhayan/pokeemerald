@@ -3658,6 +3658,8 @@ extern const u32 gItemIcon_Everstone[];
 extern const u32 gItemIconPalette_Everstone[];
 extern const u32 gItemIcon_FocusBand[];
 extern const u32 gItemIconPalette_FocusBand[];
+extern const u32 gItemIcon_Condom[];
+extern const u32 gItemIconPalette_Condom[];
 extern const u32 gItemIcon_LuckyEgg[];
 extern const u32 gItemIconPalette_LuckyEgg[];
 extern const u32 gItemIcon_ScopeLens[];

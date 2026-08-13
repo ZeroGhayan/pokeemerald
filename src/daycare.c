@@ -162,6 +162,35 @@ bool8 Daycare_HasMon(void)
     return GetBoxMonData(&gSaveBlock1Ptr->daycare.mons[0].mon, MON_DATA_SPECIES) != SPECIES_NONE;
 }
 
+
+// HACKROM: Condom held on deposited mon blocks eggs until broken
+bool8 Daycare_HasActiveCondom(void)
+{
+    u16 item;
+    if (!Daycare_HasMon())
+        return FALSE;
+    if (gSaveBlock1Ptr->daycare.hackFlags & DAYCARE_HACK_FLAG_CONDOM_BROKE)
+        return FALSE;
+    item = GetBoxMonData(&gSaveBlock1Ptr->daycare.mons[0].mon, MON_DATA_HELD_ITEM, NULL);
+    return item == ITEM_CONDOM;
+}
+
+bool8 Daycare_CondomBrokeThisDeposit(void)
+{
+    return (gSaveBlock1Ptr->daycare.hackFlags & DAYCARE_HACK_FLAG_CONDOM_BROKE) != 0;
+}
+
+void Daycare_BreakCondom(void)
+{
+    u16 none = ITEM_NONE;
+    if (!Daycare_HasMon())
+        return;
+    if (GetBoxMonData(&gSaveBlock1Ptr->daycare.mons[0].mon, MON_DATA_HELD_ITEM, NULL) != ITEM_CONDOM)
+        return;
+    SetBoxMonData(&gSaveBlock1Ptr->daycare.mons[0].mon, MON_DATA_HELD_ITEM, &none);
+    gSaveBlock1Ptr->daycare.hackFlags |= DAYCARE_HACK_FLAG_CONDOM_BROKE;
+}
+
 u8 CountPokemonInDaycare(struct DayCare *daycare)
 {
     u8 i, count;
@@ -573,6 +602,9 @@ static void _TriggerPendingDaycareMaleEgg(struct DayCare *daycare)
 
 void TriggerPendingDaycareEgg(void)
 {
+    // HACKROM: blocks egg while condom is active
+    if (Daycare_HasActiveCondom())
+        return;
     _TriggerPendingDaycareEgg(&gSaveBlock1Ptr->daycare);
 }
 

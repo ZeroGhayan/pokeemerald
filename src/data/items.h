@@ -4525,6 +4525,18 @@ const struct Item gItems[] =
         .fieldUseFunc = ItemUseOutOfBattle_CannotUse,
     },
 
+    [ITEM_CONDOM] =
+    {
+        .name = _("CONDOM"),
+        .itemId = ITEM_CONDOM,
+        .price = 200,
+        .holdEffect = HOLD_EFFECT_NONE,
+        .description = sCondomDesc,
+        .pocket = POCKET_ITEMS,
+        .type = ITEM_USE_BAG_MENU,
+        .fieldUseFunc = ItemUseOutOfBattle_CannotUse,
+    },
+
     [ITEM_OLD_SEA_MAP] =
     {
         .name = _("OLD SEA MAP"),
