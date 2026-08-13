@@ -1,5 +1,6 @@
 #include "global.h"
 #include "pokemon.h"
+#include "rtc.h"
 #include "battle.h"
 #include "daycare.h"
 #include "string_util.h"
@@ -105,6 +106,62 @@ u8 *GetBoxMonNickname(struct BoxPokemon *mon, u8 *dest)
     return StringCopy_Nickname(dest, nickname);
 }
 
+
+// HACKROM: Day-Care friendship / battle-day helpers
+static void Daycare_ResetHackState(struct DayCare *daycare)
+{
+    daycare->friendship = 0;
+    daycare->battlesToday = 0;
+    daycare->hackFlags = 0;
+}
+
+static void Daycare_RefreshBattleDay(struct DayCare *daycare)
+{
+    RtcCalcLocalTime();
+    // Use days since epoch-style stamp from local time
+    if (daycare->lastDay != gLocalTime.days)
+    {
+        daycare->lastDay = gLocalTime.days;
+        daycare->battlesToday = 0;
+    }
+}
+
+u8 GetDaycareFriendship(void)
+{
+    return gSaveBlock1Ptr->daycare.friendship;
+}
+
+void SetDaycareFriendship(u8 value)
+{
+    if (value > 255)
+        value = 255;
+    gSaveBlock1Ptr->daycare.friendship = value;
+}
+
+u8 GetDaycareBattlesToday(void)
+{
+    Daycare_RefreshBattleDay(&gSaveBlock1Ptr->daycare);
+    return gSaveBlock1Ptr->daycare.battlesToday;
+}
+
+bool8 Daycare_CanBattleToday(void)
+{
+    Daycare_RefreshBattleDay(&gSaveBlock1Ptr->daycare);
+    return gSaveBlock1Ptr->daycare.battlesToday < DAYCARE_MAX_BATTLES_PER_DAY;
+}
+
+void Daycare_IncrementBattlesToday(void)
+{
+    Daycare_RefreshBattleDay(&gSaveBlock1Ptr->daycare);
+    if (gSaveBlock1Ptr->daycare.battlesToday < DAYCARE_MAX_BATTLES_PER_DAY)
+        gSaveBlock1Ptr->daycare.battlesToday++;
+}
+
+bool8 Daycare_HasMon(void)
+{
+    return GetBoxMonData(&gSaveBlock1Ptr->daycare.mons[0].mon, MON_DATA_SPECIES) != SPECIES_NONE;
+}
+
 u8 CountPokemonInDaycare(struct DayCare *daycare)
 {
     u8 i, count;
@@ -146,14 +203,9 @@ void InitDaycareMailRecordMixing(struct DayCare *daycare, struct RecordMixingDay
 
 static s8 Daycare_FindEmptySpot(struct DayCare *daycare)
 {
-    u8 i;
-
-    for (i = 0; i < DAYCARE_MON_COUNT; i++)
-    {
-        if (GetBoxMonData(&daycare->mons[i].mon, MON_DATA_SPECIES) == SPECIES_NONE)
-            return i;
-    }
-
+    // HACKROM: only slot 0 is used (single mon Day-Care)
+    if (GetBoxMonData(&daycare->mons[0].mon, MON_DATA_SPECIES) == SPECIES_NONE)
+        return 0;
     return -1;
 }
 
@@ -176,6 +228,10 @@ static void StorePokemonInDaycare(struct Pokemon *mon, struct DaycareMon *daycar
     daycareMon->mon = mon->box;
     BoxMonRestorePP(&daycareMon->mon);
     daycareMon->steps = 0;
+    // HACKROM: friendship starts at 0 each deposit
+    Daycare_ResetHackState(&gSaveBlock1Ptr->daycare);
+    RtcCalcLocalTime();
+    gSaveBlock1Ptr->daycare.lastDay = gLocalTime.days;
     ZeroMonData(mon);
     CompactPartySlots();
     CalculatePlayerPartyCount();
@@ -189,8 +245,26 @@ static void StorePokemonInEmptyDaycareSlot(struct Pokemon *mon, struct DayCare *
 
 void StoreSelectedPokemonInDaycare(void)
 {
+    // HACKROM: only female; VAR_RESULT: 0=ok, 1=full, 2=not female
     u8 monId = GetCursorSelectionMonId();
-    StorePokemonInEmptyDaycareSlot(&gPlayerParty[monId], &gSaveBlock1Ptr->daycare);
+    struct Pokemon *mon = &gPlayerParty[monId];
+    u8 gender;
+
+    if (Daycare_FindEmptySpot(&gSaveBlock1Ptr->daycare) == -1)
+    {
+        gSpecialVar_Result = 1;
+        return;
+    }
+
+    gender = GetMonGender(mon);
+    if (gender != MON_FEMALE)
+    {
+        gSpecialVar_Result = 2;
+        return;
+    }
+
+    StorePokemonInEmptyDaycareSlot(mon, &gSaveBlock1Ptr->daycare);
+    gSpecialVar_Result = 0;
 }
 
 // Shifts the second daycare Pokémon slot into the first slot.
@@ -280,7 +354,11 @@ static u16 TakeSelectedPokemonMonFromDaycareShiftSlots(struct DayCare *daycare, 
 
 u16 TakePokemonFromDaycare(void)
 {
-    return TakeSelectedPokemonMonFromDaycareShiftSlots(&gSaveBlock1Ptr->daycare, gSpecialVar_0x8004);
+    u16 species;
+    // HACKROM: always slot 0
+    species = TakeSelectedPokemonMonFromDaycareShiftSlots(&gSaveBlock1Ptr->daycare, 0);
+    Daycare_ResetHackState(&gSaveBlock1Ptr->daycare); // clear friendship on withdraw
+    return species;
 }
 
 static u8 GetLevelAfterDaycareSteps(struct BoxPokemon *mon, u32 steps)

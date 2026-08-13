@@ -42,6 +42,8 @@
 
 // capacities of various saveblock objects
 #define DAYCARE_MON_COUNT 2
+#define DAYCARE_HACK_FLAG_CONDOM_BROKE  0x1
+#define DAYCARE_MAX_BATTLES_PER_DAY    3
 #define POKEBLOCKS_COUNT 40
 #define OBJECT_EVENTS_COUNT 16
 #define MAIL_COUNT (10 + PARTY_SIZE)

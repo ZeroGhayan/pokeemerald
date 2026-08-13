@@ -791,7 +791,11 @@ struct DayCare
     struct DaycareMon mons[DAYCARE_MON_COUNT];
     u32 offspringPersonality;
     u8 stepCounter;
-    //u8 padding[3];
+    // HACKROM: single-slot breeding / Lass battles
+    u8 friendship;       // 0-255, only while mon is deposited
+    u8 battlesToday;     // 0-3 Lass battles per day
+    u8 lastDay;          // Rtc day stamp for battlesToday reset
+    u8 hackFlags;        // bit0: condom broke this deposit
 };
 
 struct LilycoveLadyQuiz
