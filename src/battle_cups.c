@@ -1,6 +1,10 @@
 #include "global.h"
 #include "battle_cups.h"
 #include "event_data.h"
+#include "constants/trainers.h"
+#include "battle_setup.h"
+#include "battle.h"
+#include "random.h"
 #include "party_menu.h"
 #include "string_util.h"
 #include "script_pokemon_util.h"
@@ -388,6 +392,195 @@ bool8 BattleCup_TryUseRematch(void)
 }
 
 // ---- Specials ----
+
+// ---- Step 4: random opponents (battles 1-7) ----
+
+static bool8 BattleCup_SpeciesLegalForOpponent(u8 cupId, u16 species)
+{
+    if (species < SPECIES_BULBASAUR || species > SPECIES_MEW)
+        return FALSE;
+    if (BattleCup_IsSpeciesBanned(cupId, species))
+        return FALSE;
+    if (cupId == BATTLE_CUP_PETIT && !BattleCup_SpeciesPassesPetitPhysique(species))
+        return FALSE;
+    return TRUE;
+}
+
+static u8 BattleCup_PickLevelForSlot(u8 cupId, u8 slotIndex, u16 levelsLeft, u8 monsLeft)
+{
+    u8 minL, maxL, avg, level;
+
+    switch (cupId)
+    {
+    case BATTLE_CUP_POKE:
+        minL = POKE_CUP_MIN_LEVEL;
+        maxL = POKE_CUP_MAX_LEVEL;
+        break;
+    case BATTLE_CUP_PIKA:
+        minL = PIKA_CUP_MIN_LEVEL;
+        maxL = PIKA_CUP_MAX_LEVEL;
+        break;
+    case BATTLE_CUP_PETIT:
+        minL = PETIT_CUP_MIN_LEVEL;
+        maxL = PETIT_CUP_MAX_LEVEL;
+        break;
+    default: // PRIME
+        // Scale a bit with battle number
+        minL = 50 + gBattleCupState.battleNum * 5;
+        maxL = 80 + gBattleCupState.battleNum * 2;
+        if (maxL > MAX_LEVEL)
+            maxL = MAX_LEVEL;
+        if (minL > maxL)
+            minL = maxL;
+        return minL + (Random() % (maxL - minL + 1));
+    }
+
+    // Leave room for remaining mons at min level
+    {
+        u16 maxAllowed = levelsLeft - (monsLeft - 1) * minL;
+        if (maxAllowed > maxL)
+            maxAllowed = maxL;
+        if (maxAllowed < minL)
+            maxAllowed = minL;
+        if (slotIndex == monsLeft - 1)
+        {
+            // last mon: use remaining but clamp
+            level = levelsLeft;
+            if (level < minL)
+                level = minL;
+            if (level > maxL)
+                level = maxL;
+            return level;
+        }
+        avg = (minL + maxAllowed) / 2;
+        level = minL + (Random() % (maxAllowed - minL + 1));
+        (void)avg;
+        return level;
+    }
+}
+
+static u16 BattleCup_PickSpecies(u8 cupId, const u16 *already, u8 alreadyCount)
+{
+    u16 species;
+    u16 tries = 0;
+    u8 i;
+    bool8 dup;
+
+    do
+    {
+        species = SPECIES_BULBASAUR + (Random() % 151); // 1..151
+        dup = FALSE;
+        for (i = 0; i < alreadyCount; i++)
+        {
+            if (already[i] == species)
+            {
+                dup = TRUE;
+                break;
+            }
+        }
+        if (!dup && BattleCup_SpeciesLegalForOpponent(cupId, species))
+            return species;
+    } while (++tries < 500);
+
+    // Fallback: first legal species
+    for (species = SPECIES_BULBASAUR; species <= SPECIES_MEW; species++)
+    {
+        dup = FALSE;
+        for (i = 0; i < alreadyCount; i++)
+        {
+            if (already[i] == species)
+            {
+                dup = TRUE;
+                break;
+            }
+        }
+        if (!dup && BattleCup_SpeciesLegalForOpponent(cupId, species))
+            return species;
+    }
+    return SPECIES_RATTATA;
+}
+
+// Fills gEnemyParty with 3 legal mons. Returns synthetic trainer id for no-repeat tracking.
+u16 BattleCup_GenerateRandomOpponent(void)
+{
+    u8 cupId = gBattleCupState.cupId;
+    u16 species[BATTLE_CUP_PARTY_SIZE];
+    u8 levels[BATTLE_CUP_PARTY_SIZE];
+    u16 totalBudget;
+    u16 levelsLeft;
+    u8 i;
+    u16 trainerId;
+
+    ZeroEnemyPartyMons();
+
+    switch (cupId)
+    {
+    case BATTLE_CUP_POKE:  totalBudget = POKE_CUP_TOTAL_LEVEL; break;
+    case BATTLE_CUP_PIKA:  totalBudget = PIKA_CUP_TOTAL_LEVEL; break;
+    case BATTLE_CUP_PETIT: totalBudget = PETIT_CUP_TOTAL_LEVEL; break;
+    default:               totalBudget = 0xFFFF; break;
+    }
+
+    levelsLeft = totalBudget;
+    for (i = 0; i < BATTLE_CUP_PARTY_SIZE; i++)
+    {
+        species[i] = BattleCup_PickSpecies(cupId, species, i);
+        levels[i] = BattleCup_PickLevelForSlot(cupId, i, levelsLeft, BATTLE_CUP_PARTY_SIZE - i);
+        if (levelsLeft != 0xFFFF)
+            levelsLeft -= levels[i];
+    }
+
+    for (i = 0; i < BATTLE_CUP_PARTY_SIZE; i++)
+    {
+        u8 iv = 16 + (Random() % 15); // mid-high IVs
+        CreateMon(&gEnemyParty[i], species[i], levels[i], iv, FALSE, 0, OT_ID_RANDOM_NO_SHINY, 0);
+        GiveMonInitialMoveset(&gEnemyParty[i]);
+    }
+
+    // Synthetic unique id for eliminatory tracking
+    trainerId = 1000 + (Random() % 8000);
+    for (i = 0; i < gBattleCupState.defeatedCount; i++)
+    {
+        if (gBattleCupState.defeatedTrainerIds[i] == trainerId)
+            trainerId++;
+    }
+    return trainerId;
+}
+
+void BattleCup_RegisterDefeatedTrainer(u16 trainerId)
+{
+    if (gBattleCupState.defeatedCount < BATTLE_CUP_BATTLES_PER_RUN)
+    {
+        gBattleCupState.defeatedTrainerIds[gBattleCupState.defeatedCount++] = trainerId;
+    }
+}
+
+void Special_BattleCupSetupOpponent(void)
+{
+    u16 trainerId;
+
+    if (BattleCup_IsFinalBattle())
+    {
+        // Step 5 will implement fixed finals; for now also random
+        trainerId = BattleCup_GenerateRandomOpponent();
+        gSpecialVar_Result = 1; // signal final (script can branch later)
+    }
+    else
+    {
+        trainerId = BattleCup_GenerateRandomOpponent();
+        gSpecialVar_Result = 0;
+    }
+
+    VarSet(VAR_TEMP_0, trainerId); // script may store for RegisterDefeated
+    gTrainerBattleOpponent_A = trainerId;
+}
+
+void Special_BattleCupRegisterDefeated(void)
+{
+    BattleCup_RegisterDefeatedTrainer(VarGet(VAR_TEMP_0));
+    gSpecialVar_Result = 0;
+}
+
 void Special_BattleCupInit(void)
 {
     gSpecialVar_Result = BattleCup_InitChallenge();

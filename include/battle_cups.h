@@ -48,5 +48,9 @@ void Special_BattleCupOnBattleLost(void);
 void Special_BattleCupTryRematch(void);
 void Special_BattleCupIsChampion(void);
 void Special_BattleCupIsRound2Cleared(void);
+u16 BattleCup_GenerateRandomOpponent(void);
+void BattleCup_RegisterDefeatedTrainer(u16 trainerId);
+void Special_BattleCupSetupOpponent(void);
+void Special_BattleCupRegisterDefeated(void);
 
 #endif // GUARD_BATTLE_CUPS_H

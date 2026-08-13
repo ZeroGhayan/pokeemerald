@@ -563,3 +563,5 @@ gSpecials::
 	def_special Special_BattleCupTryRematch
 	def_special Special_BattleCupIsChampion
 	def_special Special_BattleCupIsRound2Cleared
+	def_special Special_BattleCupSetupOpponent
+	def_special Special_BattleCupRegisterDefeated
