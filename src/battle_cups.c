@@ -4,6 +4,10 @@
 #include "party_menu.h"
 #include "pokemon.h"
 #include "constants/species.h"
+#include "constants/moves.h"
+#include "constants/items.h"
+#include "data.h"
+#include "pokedex.h"
 
 EWRAM_DATA struct BattleCupState gBattleCupState = {0};
 
@@ -106,17 +110,184 @@ void BattleCup_SetChampionFlags(void)
     SetProgress(prog);
 }
 
-// Stubs filled in later steps
+// ---- Validation helpers ----
+static bool8 SpeciesHasPreEvolution(u16 species)
+{
+    u16 i, j;
+    for (i = 1; i < NUM_SPECIES; i++)
+    {
+        for (j = 0; j < EVOS_PER_MON; j++)
+        {
+            if (gEvolutionTable[i][j].method != 0
+             && gEvolutionTable[i][j].targetSpecies == species)
+                return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+static bool8 BattleCup_IsSpeciesBanned(u8 cupId, u16 species)
+{
+    // Event clause: Lugia / Ho-Oh always banned
+    if (species == SPECIES_LUGIA || species == SPECIES_HO_OH)
+        return TRUE;
+
+    switch (cupId)
+    {
+    case BATTLE_CUP_POKE:
+    case BATTLE_CUP_PIKA:
+    case BATTLE_CUP_PRIME:
+        if (species == SPECIES_MEWTWO || species == SPECIES_MEW)
+            return TRUE;
+        break;
+    case BATTLE_CUP_PETIT:
+        if (species == SPECIES_MEW)
+            return TRUE;
+        break;
+    }
+    return FALSE;
+}
+
+static bool8 BattleCup_SpeciesPassesPetitPhysique(u16 species)
+{
+    u16 dex = SpeciesToNationalPokedexNum(species);
+    u16 height = gPokedexEntries[dex].height; // dm
+    u16 weight = gPokedexEntries[dex].weight; // hg
+    if (height > PETIT_CUP_MAX_HEIGHT_DM)
+        return FALSE;
+    if (weight > PETIT_CUP_MAX_WEIGHT_HG)
+        return FALSE;
+    if (SpeciesHasPreEvolution(species))
+        return FALSE; // lowest evolution only
+    return TRUE;
+}
+
+static bool8 BattleCup_LevelOk(u8 cupId, u8 level)
+{
+    switch (cupId)
+    {
+    case BATTLE_CUP_POKE:
+        return level >= POKE_CUP_MIN_LEVEL && level <= POKE_CUP_MAX_LEVEL;
+    case BATTLE_CUP_PIKA:
+        return level >= PIKA_CUP_MIN_LEVEL && level <= PIKA_CUP_MAX_LEVEL;
+    case BATTLE_CUP_PETIT:
+        return level >= PETIT_CUP_MIN_LEVEL && level <= PETIT_CUP_MAX_LEVEL;
+    case BATTLE_CUP_PRIME:
+        return TRUE;
+    }
+    return FALSE;
+}
+
+static u16 BattleCup_MaxTotalLevel(u8 cupId)
+{
+    switch (cupId)
+    {
+    case BATTLE_CUP_POKE:  return POKE_CUP_TOTAL_LEVEL;
+    case BATTLE_CUP_PIKA:  return PIKA_CUP_TOTAL_LEVEL;
+    case BATTLE_CUP_PETIT: return PETIT_CUP_TOTAL_LEVEL;
+    default:               return 0xFFFF; // unlimited
+    }
+}
+
+static bool8 BattleCup_CupUsesItemClause(u8 cupId)
+{
+    return cupId == BATTLE_CUP_POKE || cupId == BATTLE_CUP_PRIME;
+}
+
+// Validate a list of party slot indices (count mons). Eggs invalid.
+static u8 BattleCup_ValidateSlotList(u8 cupId, const u8 *slots, u8 count)
+{
+    u8 i, j;
+    u16 totalLevel = 0;
+    u16 speciesSeen[PARTY_SIZE];
+    u16 itemsSeen[PARTY_SIZE];
+    u8 speciesCount = 0;
+    u8 itemCount = 0;
+
+    if (count == 0)
+        return BATTLE_CUP_VALID_FAIL_GENERIC;
+
+    for (i = 0; i < count; i++)
+    {
+        struct Pokemon *mon;
+        u16 species;
+        u8 level;
+        u16 item;
+
+        if (slots[i] >= PARTY_SIZE)
+            return BATTLE_CUP_VALID_FAIL_GENERIC;
+
+        mon = &gPlayerParty[slots[i]];
+        species = GetMonData(mon, MON_DATA_SPECIES_OR_EGG, NULL);
+        if (species == SPECIES_NONE || species == SPECIES_EGG)
+            return BATTLE_CUP_VALID_FAIL_GENERIC;
+
+        if (BattleCup_IsSpeciesBanned(cupId, species))
+            return BATTLE_CUP_VALID_FAIL_GENERIC;
+
+        level = GetMonData(mon, MON_DATA_LEVEL, NULL);
+        if (!BattleCup_LevelOk(cupId, level))
+            return BATTLE_CUP_VALID_FAIL_GENERIC;
+
+        totalLevel += level;
+
+        if (cupId == BATTLE_CUP_PETIT && !BattleCup_SpeciesPassesPetitPhysique(species))
+            return BATTLE_CUP_VALID_FAIL_GENERIC;
+
+        // Species clause
+        for (j = 0; j < speciesCount; j++)
+        {
+            if (speciesSeen[j] == species)
+                return BATTLE_CUP_VALID_FAIL_GENERIC;
+        }
+        speciesSeen[speciesCount++] = species;
+
+        // Item clause (Poké / Prime)
+        item = GetMonData(mon, MON_DATA_HELD_ITEM, NULL);
+        if (BattleCup_CupUsesItemClause(cupId) && item != ITEM_NONE)
+        {
+            for (j = 0; j < itemCount; j++)
+            {
+                if (itemsSeen[j] == item)
+                    return BATTLE_CUP_VALID_FAIL_GENERIC;
+            }
+            itemsSeen[itemCount++] = item;
+        }
+    }
+
+    if (totalLevel > BattleCup_MaxTotalLevel(cupId))
+        return BATTLE_CUP_VALID_FAIL_GENERIC;
+
+    return BATTLE_CUP_VALID_OK;
+}
+
 u8 BattleCup_ValidatePlayerParty(void)
 {
-    // Step 2: full validation
-    return BATTLE_CUP_VALID_OK;
+    u8 slots[PARTY_SIZE];
+    u8 count = 0;
+    u8 i;
+    u8 cupId = VarGet(VAR_BATTLE_CUP_ID);
+
+    // All non-egg party mons must be legal for the cup (enter check)
+    for (i = 0; i < PARTY_SIZE; i++)
+    {
+        u16 species = GetMonData(&gPlayerParty[i], MON_DATA_SPECIES_OR_EGG, NULL);
+        if (species != SPECIES_NONE && species != SPECIES_EGG)
+            slots[count++] = i;
+    }
+
+    if (count < BATTLE_CUP_PARTY_SIZE)
+        return BATTLE_CUP_VALID_FAIL_GENERIC;
+
+    return BattleCup_ValidateSlotList(cupId, slots, count);
 }
 
 u8 BattleCup_ValidateSelectedThree(void)
 {
-    return BATTLE_CUP_VALID_OK;
+    u8 cupId = VarGet(VAR_BATTLE_CUP_ID);
+    return BattleCup_ValidateSlotList(cupId, gBattleCupState.selectedSlots, BATTLE_CUP_PARTY_SIZE);
 }
+
 
 u8 BattleCup_InitChallenge(void)
 {
@@ -222,6 +393,11 @@ void Special_BattleCupInit(void)
 void Special_BattleCupValidateParty(void)
 {
     gSpecialVar_Result = BattleCup_ValidatePlayerParty();
+}
+
+void Special_BattleCupValidateSelected(void)
+{
+    gSpecialVar_Result = BattleCup_ValidateSelectedThree();
 }
 
 void Special_BattleCupIsFinal(void)

@@ -36,6 +36,7 @@ u8 BattleCup_GetUnlockedRank(u8 cupId);    // highest playable rank
 // Script API (specials)
 void Special_BattleCupInit(void);
 void Special_BattleCupValidateParty(void);
+void Special_BattleCupValidateSelected(void);
 void Special_BattleCupIsFinal(void);
 void Special_BattleCupGetBattleNum(void);
 void Special_BattleCupGetRematches(void);
