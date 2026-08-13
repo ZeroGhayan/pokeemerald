@@ -1,5 +1,6 @@
 #include "global.h"
 #include "battle.h"
+#include "battle_cups.h"
 #include "battle_message.h"
 #include "battle_anim.h"
 #include "battle_ai_script_commands.h"
@@ -2326,6 +2327,11 @@ void SetMoveEffect(bool8 primary, u8 certain)
             if (gBattleMons[gEffectBattler].ability == ABILITY_INSOMNIA)
                 break;
 
+            // HACKROM: Sleep Clause (Battle Cup) — max 1 sleeping mon per side
+            if (BattleCup_IsActive()
+             && BattleCup_SideAlreadyHasStatus(GetBattlerSide(gEffectBattler), STATUS1_SLEEP))
+                break;
+
             CancelMultiTurnMoves(gEffectBattler);
             statusChanged = TRUE;
             break;
@@ -2420,6 +2426,11 @@ void SetMoveEffect(bool8 primary, u8 certain)
             if (noSunCanFreeze == FALSE)
                 break;
             if (gBattleMons[gEffectBattler].ability == ABILITY_MAGMA_ARMOR)
+                break;
+
+            // HACKROM: Freeze Clause (Battle Cup) — max 1 frozen mon per side
+            if (BattleCup_IsActive()
+             && BattleCup_SideAlreadyHasStatus(GetBattlerSide(gEffectBattler), STATUS1_FREEZE))
                 break;
 
             CancelMultiTurnMoves(gEffectBattler);
@@ -3035,6 +3046,34 @@ static void Cmd_tryfaintmon(void)
          && gBattleMons[gActiveBattler].hp == 0)
         {
             gHitMarker |= HITMARKER_FAINTED(gActiveBattler);
+            // HACKROM: Self-KO Clause — last mon faints from own action → that side loses
+            if (BattleCup_IsActive()
+             && gActiveBattler == gBattlerAttacker
+             && (gBattleMoves[gCurrentMove].effect == EFFECT_EXPLOSION
+              || gCurrentMove == MOVE_DESTINY_BOND
+              || (gBattleMons[gBattlerTarget].status2 & STATUS2_DESTINY_BOND))
+             && BattleCup_IsLastMonOnSide(gActiveBattler))
+            {
+                if (GetBattlerSide(gActiveBattler) == B_SIDE_PLAYER)
+                    gBattleOutcome = B_OUTCOME_LOST;
+                else
+                    gBattleOutcome = B_OUTCOME_WON;
+            }
+            
+            // HACKROM: Self-KO Clause — last mon faints from own action → that side loses
+            if (BattleCup_IsActive()
+             && gActiveBattler == gBattlerAttacker
+             && (gBattleMoves[gCurrentMove].effect == EFFECT_EXPLOSION
+              || gCurrentMove == MOVE_DESTINY_BOND
+              || (gBattleMons[gBattlerTarget].status2 & STATUS2_DESTINY_BOND))
+             && BattleCup_IsLastMonOnSide(gActiveBattler))
+            {
+                if (GetBattlerSide(gActiveBattler) == B_SIDE_PLAYER)
+                    gBattleOutcome = B_OUTCOME_LOST;
+                else
+                    gBattleOutcome = B_OUTCOME_WON;
+            }
+            
             BattleScriptPush(gBattlescriptCurrInstr + 7);
             gBattlescriptCurrInstr = BS_ptr;
             if (GetBattlerSide(gActiveBattler) == B_SIDE_PLAYER)

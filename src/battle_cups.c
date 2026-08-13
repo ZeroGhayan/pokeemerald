@@ -35,6 +35,63 @@ static void SetProgress(u16 value)
     VarSet(VAR_BATTLE_CUP_PROGRESS, value);
 }
 
+
+bool8 BattleCup_IsActive(void)
+{
+    return gBattleCupState.status == BATTLE_CUP_STATUS_ACTIVE;
+}
+
+bool8 BattleCup_SideAlreadyHasStatus(u8 side, u32 statusMask)
+{
+    u32 i;
+    struct Pokemon *party = (side == B_SIDE_PLAYER) ? gPlayerParty : gEnemyParty;
+
+    for (i = 0; i < PARTY_SIZE; i++)
+    {
+        u16 species = GetMonData(&party[i], MON_DATA_SPECIES, NULL);
+        u32 status;
+        if (species == SPECIES_NONE || species == SPECIES_EGG)
+            continue;
+        status = GetMonData(&party[i], MON_DATA_STATUS, NULL);
+        if (status & statusMask)
+            return TRUE;
+    }
+    for (i = 0; i < gBattlersCount; i++)
+    {
+        if (GetBattlerSide(i) == side
+         && gBattleMons[i].hp > 0
+         && (gBattleMons[i].status1 & statusMask))
+            return TRUE;
+    }
+    return FALSE;
+}
+
+bool8 BattleCup_IsLastMonOnSide(u8 battler)
+{
+    u8 side = GetBattlerSide(battler);
+    struct Pokemon *party = (side == B_SIDE_PLAYER) ? gPlayerParty : gEnemyParty;
+    u8 partyIndex = gBattlerPartyIndexes[battler];
+    u32 i;
+    u8 othersAlive = 0;
+
+    for (i = 0; i < PARTY_SIZE; i++)
+    {
+        u16 species = GetMonData(&party[i], MON_DATA_SPECIES, NULL);
+        if (species == SPECIES_NONE || species == SPECIES_EGG)
+            continue;
+        if (i == partyIndex)
+            continue;
+        if (GetMonData(&party[i], MON_DATA_HP, NULL) > 0)
+            othersAlive++;
+    }
+    for (i = 0; i < gBattlersCount; i++)
+    {
+        if (i != battler && GetBattlerSide(i) == side && gBattleMons[i].hp > 0)
+            othersAlive++;
+    }
+    return othersAlive == 0;
+}
+
 void InitBattleCupState(void)
 {
     u8 i;
