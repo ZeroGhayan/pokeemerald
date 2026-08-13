@@ -4525,6 +4525,52 @@ const struct Item gItems[] =
         .fieldUseFunc = ItemUseOutOfBattle_CannotUse,
     },
 
+
+    [ITEM_POKE_CUP_KEY] =
+    {
+        .name = _("POKé CUP KEY"),
+        .itemId = ITEM_POKE_CUP_KEY,
+        .price = 0,
+        .description = sPokeCupKeyDesc,
+        .importance = 1,
+        .pocket = POCKET_KEY_ITEMS,
+        .type = ITEM_USE_BAG_MENU,
+        .fieldUseFunc = ItemUseOutOfBattle_CannotUse,
+    },
+    [ITEM_PIKA_CUP_KEY] =
+    {
+        .name = _("PIKA CUP KEY"),
+        .itemId = ITEM_PIKA_CUP_KEY,
+        .price = 0,
+        .description = sPikaCupKeyDesc,
+        .importance = 1,
+        .pocket = POCKET_KEY_ITEMS,
+        .type = ITEM_USE_BAG_MENU,
+        .fieldUseFunc = ItemUseOutOfBattle_CannotUse,
+    },
+    [ITEM_PETIT_CUP_KEY] =
+    {
+        .name = _("PETIT CUP KEY"),
+        .itemId = ITEM_PETIT_CUP_KEY,
+        .price = 0,
+        .description = sPetitCupKeyDesc,
+        .importance = 1,
+        .pocket = POCKET_KEY_ITEMS,
+        .type = ITEM_USE_BAG_MENU,
+        .fieldUseFunc = ItemUseOutOfBattle_CannotUse,
+    },
+    [ITEM_PRIME_CUP_KEY] =
+    {
+        .name = _("PRIME CUP KEY"),
+        .itemId = ITEM_PRIME_CUP_KEY,
+        .price = 0,
+        .description = sPrimeCupKeyDesc,
+        .importance = 1,
+        .pocket = POCKET_KEY_ITEMS,
+        .type = ITEM_USE_BAG_MENU,
+        .fieldUseFunc = ItemUseOutOfBattle_CannotUse,
+    },
+
     [ITEM_CONDOM] =
     {
         .name = _("CONDOM"),

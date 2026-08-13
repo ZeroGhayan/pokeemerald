@@ -56,5 +56,8 @@ bool8 BattleCup_IsLastMonOnSide(u8 battler);
 void BattleCup_RegisterDefeatedTrainer(u16 trainerId);
 void Special_BattleCupSetupOpponent(void);
 void Special_BattleCupRegisterDefeated(void);
+void Special_BattleCupGiveR1Prize(void);
+void Special_BattleCupGiveR2Prize(void);
+void Special_BattleCupGivePrize(void);
 
 #endif // GUARD_BATTLE_CUPS_H

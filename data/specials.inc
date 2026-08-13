@@ -565,3 +565,6 @@ gSpecials::
 	def_special Special_BattleCupIsRound2Cleared
 	def_special Special_BattleCupSetupOpponent
 	def_special Special_BattleCupRegisterDefeated
+	def_special Special_BattleCupGiveR1Prize
+	def_special Special_BattleCupGiveR2Prize
+	def_special Special_BattleCupGivePrize

@@ -1545,6 +1545,11 @@ static const u8 sMagmaEmblemDesc[] = _(
     "the same shape as\n"
     "TEAM MAGMA's mark.");
 
+static const u8 sPokeCupKeyDesc[] = _("Proof of POKé CUP victory.\nNeeded to continue the story.");
+static const u8 sPikaCupKeyDesc[] = _("Proof of PIKA CUP victory.\nNeeded to continue the story.");
+static const u8 sPetitCupKeyDesc[] = _("Proof of PETIT CUP victory.\nNeeded to continue the story.");
+static const u8 sPrimeCupKeyDesc[] = _("Proof of PRIME CUP victory.\nNeeded to continue the story.");
+
 static const u8 sCondomDesc[] = _(
     "An intimate item. When held\n    at the Day Care, prevents\n    Eggs from being found.");
 

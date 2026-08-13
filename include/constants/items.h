@@ -417,8 +417,12 @@
 #define ITEM_MAGMA_EMBLEM 375
 #define ITEM_OLD_SEA_MAP 376
 #define ITEM_CONDOM 377 // HACKROM: blocks Day-Care eggs until broken
+#define ITEM_POKE_CUP_KEY 378 // HACKROM: R1 story key (placeholder icon)
+#define ITEM_PIKA_CUP_KEY 379
+#define ITEM_PETIT_CUP_KEY 380
+#define ITEM_PRIME_CUP_KEY 381
 
-#define ITEMS_COUNT 378
+#define ITEMS_COUNT 382
 
 // A special item id associated with "Cancel"/"Exit" etc. in a list of items or decorations
 // Its icon is defined at ITEMS_COUNT as the "return to field" arrow

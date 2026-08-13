@@ -10,6 +10,7 @@
 #include "script_pokemon_util.h"
 #include "load_save.h"
 #include "pokemon.h"
+#include "item.h"
 #include "constants/species.h"
 #include "constants/moves.h"
 #include "constants/items.h"
@@ -704,6 +705,93 @@ void Special_BattleCupRegisterDefeated(void)
 {
     BattleCup_RegisterDefeatedTrainer(VarGet(VAR_TEMP_0));
     gSpecialVar_Result = 0;
+}
+
+
+static const u16 sCupR1Keys[BATTLE_CUP_COUNT] =
+{
+    [BATTLE_CUP_POKE]  = ITEM_POKE_CUP_KEY,
+    [BATTLE_CUP_PIKA]  = ITEM_PIKA_CUP_KEY,
+    [BATTLE_CUP_PETIT] = ITEM_PETIT_CUP_KEY,
+    [BATTLE_CUP_PRIME] = ITEM_PRIME_CUP_KEY,
+};
+
+// R2 gift: species, level, moves (0 = empty slot)
+struct BattleCupR2Gift
+{
+    u16 species;
+    u8 level;
+    u16 moves[4];
+};
+
+static const struct BattleCupR2Gift sCupR2Gifts[BATTLE_CUP_COUNT] =
+{
+    [BATTLE_CUP_POKE] = {
+        SPECIES_DRATINI, 10,
+        { MOVE_MEGA_DRAIN, MOVE_NONE, MOVE_NONE, MOVE_NONE }
+    },
+    [BATTLE_CUP_PIKA] = {
+        SPECIES_PIKACHU, 10,
+        { MOVE_SURF, MOVE_NONE, MOVE_NONE, MOVE_NONE }
+    },
+    [BATTLE_CUP_PETIT] = {
+        SPECIES_EEVEE, 10,
+        { MOVE_FLAMETHROWER, MOVE_THUNDERBOLT, MOVE_BUBBLE_BEAM, MOVE_NONE }
+    },
+    [BATTLE_CUP_PRIME] = {
+        SPECIES_MEW, 10,
+        { MOVE_SKETCH, MOVE_NONE, MOVE_NONE, MOVE_NONE }
+    },
+};
+
+// VAR_RESULT: 0 = given, 1 = bag/party full (script handles message)
+void Special_BattleCupGiveR1Prize(void)
+{
+    u8 cup = gBattleCupState.cupId;
+    u16 item = sCupR1Keys[cup];
+
+    // Champion flags already set in OnBattleWon path when status=WON
+    if (!AddBagItem(item, 1))
+    {
+        gSpecialVar_Result = 1;
+        return;
+    }
+    // Trainer Card symbols: progress bits already in VAR_BATTLE_CUP_PROGRESS
+    gSpecialVar_Result = 0;
+}
+
+void Special_BattleCupGiveR2Prize(void)
+{
+    struct Pokemon mon;
+    const struct BattleCupR2Gift *gift = &sCupR2Gifts[gBattleCupState.cupId];
+    u8 i;
+    u8 sent;
+
+    CreateMon(&mon, gift->species, gift->level, 32, FALSE, 0, OT_ID_PLAYER_ID, 0);
+    for (i = 0; i < MAX_MON_MOVES; i++)
+    {
+        if (gift->moves[i] != MOVE_NONE)
+            SetMonMoveSlot(&mon, gift->moves[i], i);
+    }
+    // Clear leftover default moves beyond what we set if GiveMonInitial filled — recreate clean:
+    // CreateMon already may set moves; force all four slots
+    for (i = 0; i < MAX_MON_MOVES; i++)
+        SetMonMoveSlot(&mon, gift->moves[i], i);
+
+    sent = GiveMonToPlayer(&mon);
+    if (sent == MON_GIVEN_TO_PARTY || sent == MON_GIVEN_TO_PC)
+        gSpecialVar_Result = 0;
+    else
+        gSpecialVar_Result = 1; // both full
+}
+
+// Convenience after STATUS_WON
+void Special_BattleCupGivePrize(void)
+{
+    if (gBattleCupState.isRound2)
+        Special_BattleCupGiveR2Prize();
+    else
+        Special_BattleCupGiveR1Prize();
 }
 
 void Special_BattleCupInit(void)
