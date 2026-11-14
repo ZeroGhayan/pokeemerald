@@ -16,6 +16,11 @@
 #include "constants/items.h"
 #include "data.h"
 #include "pokedex.h"
+#include "battle_anim.h"
+#include "data/battle_cups_finalists.h"
+
+extern const struct Evolution gEvolutionTable[][EVOS_PER_MON];
+extern const struct PokedexEntry gPokedexEntries[];
 
 EWRAM_DATA struct BattleCupState gBattleCupState = {0};
 

@@ -600,12 +600,12 @@ void HandleAction_SafariZoneBallThrow(void)
         else
         {
             gBattleMons[battler].hp = 0;
-            gBattleOutcome = B_OUTCOME_MON_FAINTED;
+            gBattleOutcome = B_OUTCOME_WON;
             gCurrentTurnActionNumber = gBattlersCount;
-            UpdateHealthboxAttribute(gHealthboxSpriteIds[battler], &gEnemyParty[0], HEALTHBOX_HP);
+            UpdateHealthboxAttribute(gHealthboxSpriteIds[battler], &gEnemyParty[0], HEALTHBOX_HEALTH_BAR);
             return;
         }
-        UpdateHealthboxAttribute(gHealthboxSpriteIds[battler], &gEnemyParty[0], HEALTHBOX_HP);
+        UpdateHealthboxAttribute(gHealthboxSpriteIds[battler], &gEnemyParty[0], HEALTHBOX_HEALTH_BAR);
         // Reuse near script as feedback placeholder
         gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_CREPT_CLOSER;
         gBattlescriptCurrInstr = gBattlescriptsForSafariActions[1];
@@ -637,7 +637,7 @@ void HandleAction_ThrowPokeblock(void)
         gBattleMons[battler].hp += heal;
         if (gBattleMons[battler].hp > gBattleMons[battler].maxHP)
             gBattleMons[battler].hp = gBattleMons[battler].maxHP;
-        UpdateHealthboxAttribute(gHealthboxSpriteIds[battler], &gEnemyParty[0], HEALTHBOX_HP);
+        UpdateHealthboxAttribute(gHealthboxSpriteIds[battler], &gEnemyParty[0], HEALTHBOX_HEALTH_BAR);
         gBattlescriptCurrInstr = gBattlescriptsForSafariActions[2];
         gCurrentActionFuncId = B_ACTION_EXEC_SCRIPT;
         return;

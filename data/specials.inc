@@ -568,3 +568,9 @@ gSpecials::
 	def_special Special_BattleCupGiveR1Prize
 	def_special Special_BattleCupGiveR2Prize
 	def_special Special_BattleCupGivePrize
+
+@ HACKROM: Quests menu
+	def_special Special_QuestActivate
+	def_special Special_QuestAdvance
+	def_special Special_QuestComplete
+	def_special Special_QuestGetStep

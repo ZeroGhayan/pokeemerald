@@ -1,3 +1,5 @@
+#include "female_pics.h"
+
 // Female pic tables (HACKROM)
 // Species without female sprites fall back to the male graphic
 
