@@ -55,4 +55,11 @@
 #endif
 #endif
 
+// HACKROM (Forest of Love): desliga TODAS as animações de frente dos Pokémon
+// (troca de frame + animações de movimento em batalha, resumo, Poké Ball,
+// evolução, ovo, Hall da Fama, concursos e na intro do Birch). O cry continua
+// tocando normalmente. Comente a linha abaixo para voltar ao comportamento da pret.
+// As animações de costas (BattleAnimateBackSprite) NÃO são afetadas.
+#define FOL_NO_FRONT_ANIMS
+
 #endif // GUARD_CONFIG_H

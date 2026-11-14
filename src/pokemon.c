@@ -6834,6 +6834,17 @@ void DoMonFrontSpriteAnimation(struct Sprite *sprite, u16 species, bool8 noCry, 
         pan = 0;
         break;
     }
+#ifdef FOL_NO_FRONT_ANIMS
+    // HACKROM: sem animação de frente. Só toca o cry (se pedido) e marca o
+    // sprite como "animação concluída" (SpriteCallbackDummy), igual ao caminho
+    // SKIP_FRONT_ANIM da pret que é usado quando as animações estão desligadas.
+    // Quem espera o fim da animação (batalha, Poké Ball, evolução, ovo, Hall da
+    // Fama, concursos) continua funcionando porque o callback é o mesmo.
+    if (!noCry)
+        PlayCry_Normal(species, pan);
+    sprite->callback = SpriteCallbackDummy;
+    return;
+#endif
     if (panModeAnimFlag & SKIP_FRONT_ANIM)
     {
         // No animation, only check if cry needs to be played
@@ -6868,6 +6879,12 @@ void DoMonFrontSpriteAnimation(struct Sprite *sprite, u16 species, bool8 noCry, 
 
 void PokemonSummaryDoMonAnimation(struct Sprite *sprite, u16 species, bool8 oneFrame)
 {
+#ifdef FOL_NO_FRONT_ANIMS
+    // HACKROM: o resumo não anima mais o Pokémon (o cry é tocado pelo próprio
+    // pokemon_summary_screen.c). O hFlip já foi definido na criação do sprite.
+    sprite->callback = SpriteCallbackDummy;
+    return;
+#endif
     if (!oneFrame && HasTwoFramesAnimation(species))
         StartSpriteAnim(sprite, 1);
     if (sMonAnimationDelayTable[species - 1] != 0)
@@ -6998,6 +7015,11 @@ const u8 *GetTrainerNameFromId(u16 trainerId)
 
 bool8 HasTwoFramesAnimation(u16 species)
 {
+#ifdef FOL_NO_FRONT_ANIMS
+    // HACKROM: nenhum Pokémon usa o 2º frame (anim_front.png) -> ninguém chama
+    // StartSpriteAnim(sprite, 1) num sprite de Pokémon (ex.: battle_main.c).
+    return FALSE;
+#endif
     return (species != SPECIES_CASTFORM
          && species != SPECIES_DEOXYS
          && species != SPECIES_SPINDA
