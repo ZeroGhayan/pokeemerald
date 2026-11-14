@@ -36,6 +36,7 @@ static void ClearDaycareMonMail(struct DaycareMail *mail);
 static void SetInitialEggData(struct Pokemon *mon, u16 species, struct DayCare *daycare);
 static u8 GetDaycareCompatibilityScore(struct DayCare *daycare);
 static void DaycarePrintMonInfo(u8 windowId, u32 daycareSlotId, u8 y);
+static u16 GetEggSpecies(u16 species);
 
 // RAM buffers used to assist with BuildEggMoveset()
 EWRAM_DATA static u16 sHatchedEggLevelUpMoves[EGG_LVL_UP_MOVES_ARRAY_COUNT] = {0};
@@ -384,7 +385,7 @@ void CB2_EndDaycareBattle(void)
     }
 
     // EXP to deposited mon if opponent fainted
-    if (gBattleOutcome == B_OUTCOME_MON_FAINTED || gBattleOutcome == B_OUTCOME_PLAYER_WON)
+    if (gBattleOutcome == B_OUTCOME_WON)
     {
         // Minimal: give steps-based proxy exp via daycare steps boost
         daycare->mons[0].steps += 100;
