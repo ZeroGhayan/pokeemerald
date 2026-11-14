@@ -5260,9 +5260,20 @@ static const union AnimCmd sAnim_StaticOnly[] =
     ANIMCMD_END,
 };
 
+// HACKROM FIX: o jogo chama StartSpriteAnim(sprite, 1) logo após o cry
+// (DoMonFrontSpriteAnimation / PokemonSummaryDoMonAnimation em src/pokemon.c)
+// e as tabelas originais da pret têm até 5 entradas (Blaziken: índices 0-4).
+// Com uma entrada só, o índice 1 lia fora do array (o ponteiro seguinte na ROM)
+// e o sprite recebia um frame lixo -> a ROM reiniciava no NEW GAME (Lotad do
+// Birch) e em qualquer outro lugar que anime a frente de um Pokémon.
+// Todas as entradas apontam para o mesmo frame estático.
 static const union AnimCmd *const sAnims_StaticOnly[] =
 {
-    sAnim_StaticOnly,
+    sAnim_StaticOnly, // 0: frame normal
+    sAnim_StaticOnly, // 1: usado logo após o cry
+    sAnim_StaticOnly, // 2: DOUBLE_ANIMATION
+    sAnim_StaticOnly, // 3
+    sAnim_StaticOnly, // 4: maior tabela da pret (Blaziken)
 };
 
 const union AnimCmd *const *const gMonFrontAnimsPtrTable[] =
