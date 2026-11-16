@@ -43,7 +43,6 @@
 #include "palette.h"
 #include "party_menu.h"
 
-static u8 sPartyInfatuationIconSpriteIds[PARTY_SIZE]; // HACKROM
 #include "player_pc.h"
 #include "pokemon.h"
 #include "pokemon_icon.h"
@@ -214,6 +213,7 @@ struct PartyMenuBox
     u8 itemSpriteId;
     u8 pokeballSpriteId;
     u8 statusSpriteId;
+    u8 infatuationSpriteId; // HACKROM: ícone de Infatuation, pertence à caixa como o de status
 };
 
 // EWRAM vars
@@ -813,7 +813,7 @@ static void InitPartyMenuBoxes(u8 layout)
         sPartyMenuBoxes[i].itemSpriteId = SPRITE_NONE;
         sPartyMenuBoxes[i].pokeballSpriteId = SPRITE_NONE;
         sPartyMenuBoxes[i].statusSpriteId = SPRITE_NONE;
-        sPartyInfatuationIconSpriteIds[i] = SPRITE_NONE;
+        sPartyMenuBoxes[i].infatuationSpriteId = SPRITE_NONE;
     }
     // The first party mon goes in the left column
     sPartyMenuBoxes[0].infoRects = &sPartyBoxInfoRects[PARTY_BOX_LEFT_COLUMN];
@@ -2913,6 +2913,8 @@ static void MovePartyMenuBoxSprites(struct PartyMenuBox *menuBox, s16 offset)
     gSprites[menuBox->itemSpriteId].x2 += offset * 8;
     gSprites[menuBox->monSpriteId].x2 += offset * 8;
     gSprites[menuBox->statusSpriteId].x2 += offset * 8;
+    if (menuBox->infatuationSpriteId != SPRITE_NONE)
+        gSprites[menuBox->infatuationSpriteId].x2 += offset * 8;
 }
 
 static void SlidePartyMenuBoxSpritesOneStep(u8 taskId)
@@ -3035,6 +3037,9 @@ static void SwitchPartyMon(void)
     SwitchMenuBoxSprites(&menuBoxes[0]->itemSpriteId, &menuBoxes[1]->itemSpriteId);
     SwitchMenuBoxSprites(&menuBoxes[0]->monSpriteId, &menuBoxes[1]->monSpriteId);
     SwitchMenuBoxSprites(&menuBoxes[0]->statusSpriteId, &menuBoxes[1]->statusSpriteId);
+    // HACKROM: o ícone de Infatuation troca de caixa junto com o Pokémon
+    // (antes ficava preso ao número do slot e parecia "passar" para o outro).
+    SwitchMenuBoxSprites(&menuBoxes[0]->infatuationSpriteId, &menuBoxes[1]->infatuationSpriteId);
 }
 
 // Finish switching mons or using Softboiled
@@ -4184,23 +4189,43 @@ static void LoadPartyMenuPokeballGfx(void)
     LoadCompressedSpritePalette(&sSpritePalette_MenuPokeball);
 }
 
+// HACKROM: ícone de Infatuation (níveis 1-3) colado à direita do ícone de
+// status, criado e guardado na própria PartyMenuBox, como o statusSpriteId.
+static void CreatePartyMonInfatuationSprite(struct PartyMenuBox *menuBox)
+{
+    menuBox->infatuationSpriteId = CreateSprite(&sSpriteTemplate_InfatuationIcons, menuBox->spriteCoords[4] + 32, menuBox->spriteCoords[5], 0);
+    if (menuBox->infatuationSpriteId == MAX_SPRITES)
+    {
+        menuBox->infatuationSpriteId = SPRITE_NONE;
+        return;
+    }
+    gSprites[menuBox->infatuationSpriteId].oam.priority = 0;
+    gSprites[menuBox->infatuationSpriteId].invisible = TRUE;
+}
+
+static void UpdatePartyMonInfatuationGfx(u8 level, struct PartyMenuBox *menuBox)
+{
+    if (menuBox->infatuationSpriteId == SPRITE_NONE)
+        return;
+    if (level == 0)
+    {
+        gSprites[menuBox->infatuationSpriteId].invisible = TRUE;
+    }
+    else
+    {
+        if (level > 3)
+            level = 3;
+        StartSpriteAnim(&gSprites[menuBox->infatuationSpriteId], level - 1);
+        gSprites[menuBox->infatuationSpriteId].invisible = FALSE;
+    }
+}
+
 static void CreatePartyMonStatusSprite(struct Pokemon *mon, struct PartyMenuBox *menuBox)
 {
     if (GetMonData(mon, MON_DATA_SPECIES) != SPECIES_NONE)
     {
-        u8 slot;
         menuBox->statusSpriteId = CreateSprite(&sSpriteTemplate_StatusIcons, menuBox->spriteCoords[4], menuBox->spriteCoords[5], 0);
-        // HACKROM: resolve slot from menuBox pointer
-        for (slot = 0; slot < PARTY_SIZE; slot++)
-        {
-            if (&sPartyMenuBoxes[slot] == menuBox)
-                break;
-        }
-        if (slot >= PARTY_SIZE)
-            slot = 0;
-        sPartyInfatuationIconSpriteIds[slot] = CreateSprite(&sSpriteTemplate_InfatuationIcons, menuBox->spriteCoords[4] + 32, menuBox->spriteCoords[5], 0);
-        gSprites[sPartyInfatuationIconSpriteIds[slot]].oam.priority = 0;
-        gSprites[sPartyInfatuationIconSpriteIds[slot]].invisible = TRUE;
+        CreatePartyMonInfatuationSprite(menuBox);
         SetPartyMonAilmentGfx(mon, menuBox);
     }
 }
@@ -4209,18 +4234,10 @@ static void CreatePartyMonStatusSpriteParameterized(u16 species, u8 status, stru
 {
     if (species != SPECIES_NONE)
     {
-        u8 slot;
         menuBox->statusSpriteId = CreateSprite(&sSpriteTemplate_StatusIcons, menuBox->spriteCoords[4], menuBox->spriteCoords[5], 0);
-        for (slot = 0; slot < PARTY_SIZE; slot++)
-        {
-            if (&sPartyMenuBoxes[slot] == menuBox)
-                break;
-        }
-        if (slot >= PARTY_SIZE)
-            slot = 0;
-        sPartyInfatuationIconSpriteIds[slot] = CreateSprite(&sSpriteTemplate_InfatuationIcons, menuBox->spriteCoords[4] + 32, menuBox->spriteCoords[5], 0);
-        gSprites[sPartyInfatuationIconSpriteIds[slot]].oam.priority = 0;
-        gSprites[sPartyInfatuationIconSpriteIds[slot]].invisible = TRUE;
+        // Caixas parametrizadas (parceiro da batalha multi) não têm o nível
+        // salvo: o ícone é criado escondido.
+        CreatePartyMonInfatuationSprite(menuBox);
         UpdatePartyMonAilmentGfx(status, menuBox);
         gSprites[menuBox->statusSpriteId].oam.priority = 0;
     }
@@ -4228,34 +4245,9 @@ static void CreatePartyMonStatusSpriteParameterized(u16 species, u8 status, stru
 
 static void SetPartyMonAilmentGfx(struct Pokemon *mon, struct PartyMenuBox *menuBox)
 {
-    u8 slot;
-    u8 level;
-
     UpdatePartyMonAilmentGfx(GetMonAilment(mon), menuBox);
-
-    // HACKROM: show infatuation level icon if > 0
-    for (slot = 0; slot < PARTY_SIZE; slot++)
-    {
-        if (&sPartyMenuBoxes[slot] == menuBox)
-            break;
-    }
-    if (slot >= PARTY_SIZE)
-        return;
-    if (sPartyInfatuationIconSpriteIds[slot] == SPRITE_NONE)
-        return;
-
-    level = GetMonData(mon, MON_DATA_INFATUATION_LEVEL, NULL);
-    if (level == 0)
-    {
-        gSprites[sPartyInfatuationIconSpriteIds[slot]].invisible = TRUE;
-    }
-    else
-    {
-        if (level > 3)
-            level = 3;
-        StartSpriteAnim(&gSprites[sPartyInfatuationIconSpriteIds[slot]], level - 1);
-        gSprites[sPartyInfatuationIconSpriteIds[slot]].invisible = FALSE;
-    }
+    // HACKROM: o nível vem do próprio Pokémon desta caixa.
+    UpdatePartyMonInfatuationGfx(GetMonData(mon, MON_DATA_INFATUATION_LEVEL, NULL), menuBox);
 }
 
 static void UpdatePartyMonAilmentGfx(u8 status, struct PartyMenuBox *menuBox)
@@ -6242,6 +6234,8 @@ static void SlideMultiPartyMenuBoxSpritesOneStep(u8 taskId)
             MoveMultiPartyMenuBoxSprite(sPartyMenuBoxes[i].itemSpriteId, tXPos - 8);
             MoveMultiPartyMenuBoxSprite(sPartyMenuBoxes[i].pokeballSpriteId, tXPos - 8);
             MoveMultiPartyMenuBoxSprite(sPartyMenuBoxes[i].statusSpriteId, tXPos - 8);
+            if (sPartyMenuBoxes[i].infatuationSpriteId != SPRITE_NONE)
+                MoveMultiPartyMenuBoxSprite(sPartyMenuBoxes[i].infatuationSpriteId, tXPos - 8);
         }
     }
     ChangeBgX(2, 0x800, BG_COORD_ADD);

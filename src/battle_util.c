@@ -102,6 +102,10 @@ void SetBattlerInfatuationLevel(u8 battler, u8 level)
     SetMonData(mon, MON_DATA_INFATUATION_LEVEL, &level);
     if (level == 0)
         gBattleMons[battler].status2 &= ~STATUS2_INFATUATION;
+    // HACKROM: o ícone do healthbox acompanha o nível na hora (Attract,
+    // Cute Charm, queda de nível por dano/KO), sem esperar o próximo refresh
+    // do ícone de status.
+    UpdateInfatuationBattleIcon(battler);
 }
 
 void HandleAction_UseMove(void)
