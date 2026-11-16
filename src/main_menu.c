@@ -1260,7 +1260,7 @@ static void HighlightSelectedMainMenuItem(u8 menuType, u8 selectedMenuItem, s16 
 #define tBirchSpriteId data[8]
 // HACKROM: Pokémon que o Prof. Birch solta da Poké Ball no NEW GAME.
 // Troque esta constante (ex.: SPECIES_BULBASAUR) para mudar o Pokémon da intro.
-#define BIRCH_INTRO_SPECIES SPECIES_LOTAD
+#define BIRCH_INTRO_SPECIES SPECIES_POLIWAG
 
 #define tLotadSpriteId data[9]
 #define tBrendanSpriteId data[10]
