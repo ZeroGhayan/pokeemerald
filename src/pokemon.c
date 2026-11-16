@@ -6549,14 +6549,40 @@ const u32 *GetMonFrontSpritePal(struct Pokemon *mon)
     return GetMonSpritePalFromSpeciesAndPersonality(species, otId, personality);
 }
 
+// HACKROM (Forest of Love): paleta própria para as sprites femininas.
+// Fêmea shiny:  shiny_f.pal  -> senão normal_f.pal -> senão shiny.pal
+// Fêmea normal: normal_f.pal -> senão normal.pal
+// Machos e espécies sem gênero/sem paleta feminina continuam como na pret.
+// A tag continua a mesma da espécie (normal ou shiny), então quem carrega a
+// paleta por tag (field_effect.c, CreateMonPicSprite...) não quebra.
+extern const struct CompressedSpritePalette gMonPaletteTableFemale[];
+extern const struct CompressedSpritePalette gMonShinyPaletteTableFemale[];
+
+static const struct CompressedSpritePalette *GetFemaleMonPalette(u16 species, u32 personality, bool8 shiny)
+{
+    if (species == SPECIES_NONE || species >= NUM_SPECIES)
+        return NULL;
+    if (GetGenderFromSpeciesAndPersonality(species, personality) != MON_FEMALE)
+        return NULL;
+    if (shiny && gMonShinyPaletteTableFemale[species].data != NULL)
+        return &gMonShinyPaletteTableFemale[species];
+    if (gMonPaletteTableFemale[species].data != NULL)
+        return &gMonPaletteTableFemale[species];
+    return NULL;
+}
+
 const u32 *GetMonSpritePalFromSpeciesAndPersonality(u16 species, u32 otId, u32 personality)
 {
     u32 shinyValue;
+    const struct CompressedSpritePalette *femalePal;
 
     if (species > NUM_SPECIES)
         return gMonPaletteTable[SPECIES_NONE].data;
 
     shinyValue = GET_SHINY_VALUE(otId, personality);
+    femalePal = GetFemaleMonPalette(species, personality, shinyValue < SHINY_ODDS);
+    if (femalePal != NULL)
+        return femalePal->data;
     if (shinyValue < SHINY_ODDS)
         return gMonShinyPaletteTable[species].data;
     else
@@ -6574,8 +6600,25 @@ const struct CompressedSpritePalette *GetMonSpritePalStruct(struct Pokemon *mon)
 const struct CompressedSpritePalette *GetMonSpritePalStructFromOtIdPersonality(u16 species, u32 otId , u32 personality)
 {
     u32 shinyValue;
+    const struct CompressedSpritePalette *femalePal;
 
     shinyValue = GET_SHINY_VALUE(otId, personality);
+    femalePal = GetFemaleMonPalette(species, personality, shinyValue < SHINY_ODDS);
+    if (femalePal != NULL)
+    {
+        // Mantém a tag da espécie (normal ou shiny) para não quebrar quem
+        // procura a paleta pela tag original.
+        // Dois buffers alternados: a evolução pede a paleta de duas espécies
+        // seguidas e cada ponteiro precisa continuar válido.
+        static struct CompressedSpritePalette sFemalePal[2];
+        static u8 sFemalePalId;
+        struct CompressedSpritePalette *pal = &sFemalePal[sFemalePalId];
+
+        sFemalePalId ^= 1;
+        pal->data = femalePal->data;
+        pal->tag = (shinyValue < SHINY_ODDS) ? gMonShinyPaletteTable[species].tag : gMonPaletteTable[species].tag;
+        return pal;
+    }
     if (shinyValue < SHINY_ODDS)
         return &gMonShinyPaletteTable[species];
     else

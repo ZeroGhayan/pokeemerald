@@ -3,7 +3,9 @@
 // Female pic tables (HACKROM)
 // Species without female sprites fall back to the male graphic
 
-const struct CompressedSpriteSheet gMonFrontPicTableFemale[] =
+// Tamanho fixo NUM_SPECIES: espécies sem entrada ficam NULL (fallback para a
+// sprite normal) em vez de ler fora do array (ex.: Bagon, Latias, Chimecho).
+const struct CompressedSpriteSheet gMonFrontPicTableFemale[NUM_SPECIES] =
 {
     SPECIES_SPRITE(NONE, gMonFrontPic_CircledQuestionMark),
     SPECIES_SPRITE(ABRA, gMonFrontPic_AbraF),
@@ -165,7 +167,7 @@ const struct CompressedSpriteSheet gMonFrontPicTableFemale[] =
     SPECIES_SPRITE(ZUBAT, gMonFrontPic_ZubatF),
 };
 
-const struct CompressedSpriteSheet gMonBackPicTableFemale[] =
+const struct CompressedSpriteSheet gMonBackPicTableFemale[NUM_SPECIES] =
 {
     SPECIES_SPRITE(NONE, gMonBackPic_CircledQuestionMark),
     SPECIES_SPRITE(ABRA, gMonBackPic_AbraF),
@@ -326,3 +328,8 @@ const struct CompressedSpriteSheet gMonBackPicTableFemale[] =
     SPECIES_SPRITE(ZAPDOS, gMonBackPic_ZapdosF),
     SPECIES_SPRITE(ZUBAT, gMonBackPic_ZubatF),
 };
+
+// HACKROM: tabelas de paletas das fêmeas (ver tools/female_palettes.py).
+#define FOL_FEMALE_PAL_TABLE
+#include "female_palettes.h"
+#undef FOL_FEMALE_PAL_TABLE
