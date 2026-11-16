@@ -2265,8 +2265,8 @@ const struct Item gItems[] =
         .holdEffect = HOLD_EFFECT_CURE_ATTRACT,
         .description = sMentalHerbDesc,
         .pocket = POCKET_ITEMS,
-        .type = ITEM_USE_BAG_MENU,
-        .fieldUseFunc = ItemUseOutOfBattle_CannotUse,
+        .type = ITEM_USE_PARTY_MENU,
+        .fieldUseFunc = ItemUseOutOfBattle_MentalHerb, // HACKROM: usável fora da batalha
     },
 
     [ITEM_CHOICE_BAND] =

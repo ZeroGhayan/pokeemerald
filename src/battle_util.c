@@ -3698,9 +3698,12 @@ u8 ItemBattleEffects(u8 caseID, u8 battler, bool8 moveTurn)
                 }
                 break;
             case HOLD_EFFECT_CURE_ATTRACT:
-                if (gBattleMons[battler].status2 & STATUS2_INFATUATION)
+                // HACKROM: também cura o nível de Infatuation que veio de fora
+                // da batalha (status2 pode estar vazio nesse caso).
+                if ((gBattleMons[battler].status2 & STATUS2_INFATUATION) || GetBattlerInfatuationLevel(battler) != 0)
                 {
                     gBattleMons[battler].status2 &= ~STATUS2_INFATUATION;
+                    SetBattlerInfatuationLevel(battler, 0);
                     StringCopy(gBattleTextBuff1, gStatusConditionString_LoveJpn);
                     BattleScriptExecute(BattleScript_BerryCureChosenStatusEnd2);
                     gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_CURED_PROBLEM;
@@ -3801,9 +3804,12 @@ u8 ItemBattleEffects(u8 caseID, u8 battler, bool8 moveTurn)
                 }
                 break;
             case HOLD_EFFECT_CURE_ATTRACT:
-                if (gBattleMons[battler].status2 & STATUS2_INFATUATION)
+                // HACKROM: também cura o nível de Infatuation que veio de fora
+                // da batalha (status2 pode estar vazio nesse caso).
+                if ((gBattleMons[battler].status2 & STATUS2_INFATUATION) || GetBattlerInfatuationLevel(battler) != 0)
                 {
                     gBattleMons[battler].status2 &= ~STATUS2_INFATUATION;
+                    SetBattlerInfatuationLevel(battler, 0);
                     StringCopy(gBattleTextBuff1, gStatusConditionString_LoveJpn);
                     BattleScriptPushCursor();
                     gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_CURED_PROBLEM;

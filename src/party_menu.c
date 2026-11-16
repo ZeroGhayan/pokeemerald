@@ -4506,6 +4506,35 @@ void ItemUseCB_Medicine(u8 taskId, TaskFunc task)
     }
 }
 
+// HACKROM (Forest of Love): MENTAL HERB fora da batalha. Zera o nível de
+// Infatuation (MON_DATA_INFATUATION_LEVEL, 1-3) do Pokémon escolhido, gasta 1
+// erva e atualiza o ícone da caixa. Sem Infatuation: "It won't have any effect."
+void ItemUseCB_MentalHerb(u8 taskId, TaskFunc task)
+{
+    struct Pokemon *mon = &gPlayerParty[gPartyMenu.slotId];
+    u8 level = 0;
+
+    if (GetMonData(mon, MON_DATA_IS_EGG) || GetMonData(mon, MON_DATA_INFATUATION_LEVEL) == 0)
+    {
+        gPartyMenuUseExitCallback = FALSE;
+        PlaySE(SE_SELECT);
+        DisplayPartyMenuMessage(gText_WontHaveEffect, TRUE);
+        ScheduleBgCopyTilemapToVram(2);
+        gTasks[taskId].func = task;
+        return;
+    }
+    gPartyMenuUseExitCallback = TRUE;
+    PlaySE(SE_USE_ITEM);
+    SetMonData(mon, MON_DATA_INFATUATION_LEVEL, &level);
+    RemoveBagItem(gSpecialVar_ItemId, 1);
+    SetPartyMonAilmentGfx(mon, &sPartyMenuBoxes[gPartyMenu.slotId]);
+    GetMonNickname(mon, gStringVar1);
+    StringExpandPlaceholders(gStringVar4, gText_PkmnGotOverInfatuation);
+    DisplayPartyMenuMessage(gStringVar4, TRUE);
+    ScheduleBgCopyTilemapToVram(2);
+    gTasks[taskId].func = task;
+}
+
 static void Task_DisplayHPRestoredMessage(u8 taskId)
 {
     GetMonNickname(&gPlayerParty[gPartyMenu.slotId], gStringVar1);

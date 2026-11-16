@@ -25,6 +25,7 @@ FallarborTown_Mart_Pokemart:
 	.2byte ITEM_X_DEFEND
 	.2byte ITEM_DIRE_HIT
 	.2byte ITEM_GUARD_SPEC
+	.2byte ITEM_MENTAL_HERB @ HACKROM (provisório): cura Infatuation
 	pokemartlistend
 
 FallarborTown_Mart_EventScript_Woman::
