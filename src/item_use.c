@@ -745,6 +745,14 @@ void ItemUseOutOfBattle_Medicine(u8 taskId)
     SetUpItemUseCallback(taskId);
 }
 
+// HACKROM (Forest of Love): MENTAL HERB pela mochila, num Pokémon do time,
+// zera a Infatuation que sobrou de batalhas (qualquer nível, 1 a 3).
+void ItemUseOutOfBattle_MentalHerb(u8 taskId)
+{
+    gItemUseCB = ItemUseCB_MentalHerb;
+    SetUpItemUseCallback(taskId);
+}
+
 void ItemUseOutOfBattle_ReduceEV(u8 taskId)
 {
     gItemUseCB = ItemUseCB_ReduceEV;

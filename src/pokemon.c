@@ -2203,6 +2203,58 @@ void CreateMon(struct Pokemon *mon, u16 species, u8 level, u8 fixedIV, u8 hasFix
     CalculateMonStats(mon);
 }
 
+#if FOL_FORCE_FEMALE_INGAME
+// HACKROM (Forest of Love): devolve uma personalidade de FÊMEA para a espécie,
+// mantendo o que a personalidade original já decidia:
+// - a mesma natureza (personality % 25): Synchronize, CreateMonWithNature,
+//   times de treinador etc. continuam com a natureza pedida;
+// - o mesmo estado shiny/não shiny com este OT (inclusive o
+//   OT_ID_RANDOM_NO_SHINY, que nunca vira shiny).
+// A habilidade (bit 0) é sorteada junto, como em qualquer personalidade nova.
+// Não mexe em: espécie sem chance de fêmea (MON_MALE), só fêmea
+// (MON_FEMALE), sem gênero (MON_GENDERLESS), Unown (letra vem da
+// personalidade) e personalidade que já é fêmea.
+static u32 FemalePersonality(u16 species, u32 personality, u32 otId)
+{
+    u8 ratio, nature;
+    bool8 shiny;
+    u16 otXor, lo, hi;
+    u32 cand;
+    s32 tries;
+
+    if (species == SPECIES_NONE || species >= NUM_SPECIES || species == SPECIES_UNOWN)
+        return personality;
+    ratio = gSpeciesInfo[species].genderRatio;
+    if (ratio == MON_MALE || ratio == MON_FEMALE || ratio == MON_GENDERLESS)
+        return personality;
+    if ((personality & 0xFF) < ratio)
+        return personality; // já é fêmea
+
+    nature = personality % NUM_NATURES;
+    shiny = (GET_SHINY_VALUE(otId, personality) < SHINY_ODDS);
+    otXor = HIHALF(otId) ^ LOHALF(otId);
+
+    for (tries = 0; tries < 2000; tries++)
+    {
+        // Byte baixo < ratio = fêmea (GetGenderFromSpeciesAndPersonality).
+        lo = (Random() & 0xFF00) | (Random() % ratio);
+        if (shiny)
+            hi = lo ^ otXor ^ (Random() % SHINY_ODDS); // valor shiny < 8
+        else
+            hi = Random();
+        cand = ((u32)hi << 16) | lo;
+        if (cand % NUM_NATURES != nature)
+            continue;
+        if ((GET_SHINY_VALUE(otId, cand) < SHINY_ODDS) != shiny)
+            continue;
+        return cand;
+    }
+    // Praticamente impossível chegar aqui (~25 tentativas em média). Garante
+    // pelo menos o gênero, mesmo que a natureza mude.
+    return (personality & ~0xFF) | (Random() % ratio);
+}
+#endif
+
 void CreateBoxMon(struct BoxPokemon *boxMon, u16 species, u8 level, u8 fixedIV, u8 hasFixedPersonality, u32 fixedPersonality, u8 otIdType, u32 fixedOtId)
 {
     u8 speciesName[POKEMON_NAME_LENGTH + 1];
@@ -2216,8 +2268,6 @@ void CreateBoxMon(struct BoxPokemon *boxMon, u16 species, u8 level, u8 fixedIV, 
         personality = fixedPersonality;
     else
         personality = Random32();
-
-    SetBoxMonData(boxMon, MON_DATA_PERSONALITY, &personality);
 
     // Determine original trainer ID
     if (otIdType == OT_ID_RANDOM_NO_SHINY)
@@ -2242,6 +2292,11 @@ void CreateBoxMon(struct BoxPokemon *boxMon, u16 species, u8 level, u8 fixedIV, 
               | (gSaveBlock2Ptr->playerTrainerId[3] << 24);
     }
 
+#if FOL_FORCE_FEMALE_INGAME
+    // HACKROM: todo Pokémon criado no jogo nasce fêmea (ver FemalePersonality).
+    personality = FemalePersonality(species, personality, value);
+#endif
+    SetBoxMonData(boxMon, MON_DATA_PERSONALITY, &personality);
     SetBoxMonData(boxMon, MON_DATA_OT_ID, &value);
 
     checksum = CalculateBoxMonChecksum(boxMon);
@@ -6549,14 +6604,40 @@ const u32 *GetMonFrontSpritePal(struct Pokemon *mon)
     return GetMonSpritePalFromSpeciesAndPersonality(species, otId, personality);
 }
 
+// HACKROM (Forest of Love): paleta própria para as sprites femininas.
+// Fêmea shiny:  shiny_f.pal  -> senão normal_f.pal -> senão shiny.pal
+// Fêmea normal: normal_f.pal -> senão normal.pal
+// Machos e espécies sem gênero/sem paleta feminina continuam como na pret.
+// A tag continua a mesma da espécie (normal ou shiny), então quem carrega a
+// paleta por tag (field_effect.c, CreateMonPicSprite...) não quebra.
+extern const struct CompressedSpritePalette gMonPaletteTableFemale[];
+extern const struct CompressedSpritePalette gMonShinyPaletteTableFemale[];
+
+static const struct CompressedSpritePalette *GetFemaleMonPalette(u16 species, u32 personality, bool8 shiny)
+{
+    if (species == SPECIES_NONE || species >= NUM_SPECIES)
+        return NULL;
+    if (GetGenderFromSpeciesAndPersonality(species, personality) != MON_FEMALE)
+        return NULL;
+    if (shiny && gMonShinyPaletteTableFemale[species].data != NULL)
+        return &gMonShinyPaletteTableFemale[species];
+    if (gMonPaletteTableFemale[species].data != NULL)
+        return &gMonPaletteTableFemale[species];
+    return NULL;
+}
+
 const u32 *GetMonSpritePalFromSpeciesAndPersonality(u16 species, u32 otId, u32 personality)
 {
     u32 shinyValue;
+    const struct CompressedSpritePalette *femalePal;
 
     if (species > NUM_SPECIES)
         return gMonPaletteTable[SPECIES_NONE].data;
 
     shinyValue = GET_SHINY_VALUE(otId, personality);
+    femalePal = GetFemaleMonPalette(species, personality, shinyValue < SHINY_ODDS);
+    if (femalePal != NULL)
+        return femalePal->data;
     if (shinyValue < SHINY_ODDS)
         return gMonShinyPaletteTable[species].data;
     else
@@ -6574,8 +6655,25 @@ const struct CompressedSpritePalette *GetMonSpritePalStruct(struct Pokemon *mon)
 const struct CompressedSpritePalette *GetMonSpritePalStructFromOtIdPersonality(u16 species, u32 otId , u32 personality)
 {
     u32 shinyValue;
+    const struct CompressedSpritePalette *femalePal;
 
     shinyValue = GET_SHINY_VALUE(otId, personality);
+    femalePal = GetFemaleMonPalette(species, personality, shinyValue < SHINY_ODDS);
+    if (femalePal != NULL)
+    {
+        // Mantém a tag da espécie (normal ou shiny) para não quebrar quem
+        // procura a paleta pela tag original.
+        // Dois buffers alternados: a evolução pede a paleta de duas espécies
+        // seguidas e cada ponteiro precisa continuar válido.
+        static struct CompressedSpritePalette sFemalePal[2];
+        static u8 sFemalePalId;
+        struct CompressedSpritePalette *pal = &sFemalePal[sFemalePalId];
+
+        sFemalePalId ^= 1;
+        pal->data = femalePal->data;
+        pal->tag = (shinyValue < SHINY_ODDS) ? gMonShinyPaletteTable[species].tag : gMonPaletteTable[species].tag;
+        return pal;
+    }
     if (shinyValue < SHINY_ODDS)
         return &gMonShinyPaletteTable[species];
     else
@@ -6585,6 +6683,12 @@ const struct CompressedSpritePalette *GetMonSpritePalStructFromOtIdPersonality(u
 bool32 IsHMMove2(u16 move)
 {
     int i = 0;
+
+#ifdef FOL_HMS_FORGETTABLE
+    // HACKROM: golpes de HM podem ser esquecidos (level up na batalha,
+    // evolução). Os HMs continuam na mochila para reensinar.
+    return FALSE;
+#endif
     while (sHMMoves[i] != HM_MOVES_END)
     {
         if (sHMMoves[i++] == move)
@@ -6834,6 +6938,17 @@ void DoMonFrontSpriteAnimation(struct Sprite *sprite, u16 species, bool8 noCry, 
         pan = 0;
         break;
     }
+#ifdef FOL_NO_FRONT_ANIMS
+    // HACKROM: sem animação de frente. Só toca o cry (se pedido) e marca o
+    // sprite como "animação concluída" (SpriteCallbackDummy), igual ao caminho
+    // SKIP_FRONT_ANIM da pret que é usado quando as animações estão desligadas.
+    // Quem espera o fim da animação (batalha, Poké Ball, evolução, ovo, Hall da
+    // Fama, concursos) continua funcionando porque o callback é o mesmo.
+    if (!noCry)
+        PlayCry_Normal(species, pan);
+    sprite->callback = SpriteCallbackDummy;
+    return;
+#endif
     if (panModeAnimFlag & SKIP_FRONT_ANIM)
     {
         // No animation, only check if cry needs to be played
@@ -6868,6 +6983,12 @@ void DoMonFrontSpriteAnimation(struct Sprite *sprite, u16 species, bool8 noCry, 
 
 void PokemonSummaryDoMonAnimation(struct Sprite *sprite, u16 species, bool8 oneFrame)
 {
+#ifdef FOL_NO_FRONT_ANIMS
+    // HACKROM: o resumo não anima mais o Pokémon (o cry é tocado pelo próprio
+    // pokemon_summary_screen.c). O hFlip já foi definido na criação do sprite.
+    sprite->callback = SpriteCallbackDummy;
+    return;
+#endif
     if (!oneFrame && HasTwoFramesAnimation(species))
         StartSpriteAnim(sprite, 1);
     if (sMonAnimationDelayTable[species - 1] != 0)
@@ -6998,6 +7119,11 @@ const u8 *GetTrainerNameFromId(u16 trainerId)
 
 bool8 HasTwoFramesAnimation(u16 species)
 {
+#ifdef FOL_NO_FRONT_ANIMS
+    // HACKROM: nenhum Pokémon usa o 2º frame (anim_front.png) -> ninguém chama
+    // StartSpriteAnim(sprite, 1) num sprite de Pokémon (ex.: battle_main.c).
+    return FALSE;
+#endif
     return (species != SPECIES_CASTFORM
          && species != SPECIES_DEOXYS
          && species != SPECIES_SPINDA

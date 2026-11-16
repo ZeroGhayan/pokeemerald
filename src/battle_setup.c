@@ -13,6 +13,7 @@
 #include "field_player_avatar.h"
 #include "fieldmap.h"
 #include "random.h"
+#include "pokedex.h"
 #include "starter_choose.h"
 #include "script_pokemon_util.h"
 #include "palette.h"
@@ -492,7 +493,7 @@ static void DoBattlePyramidTrainerHillBattle(void)
 // Initiates battle where Wally catches Ralts
 void StartWallyTutorialBattle(void)
 {
-    CreateMaleMon(&gEnemyParty[0], SPECIES_RALTS, 5);
+    CreateMaleMon(&gEnemyParty[0], SPECIES_DROWZEE, 5);
     LockPlayerFieldControls();
     gMain.savedCallback = CB2_ReturnToFieldContinueScriptPlayMapMusic;
     gBattleTypeFlags = BATTLE_TYPE_WALLY_TUTORIAL;
@@ -933,7 +934,21 @@ static void CB2_GiveStarter(void)
 
     *GetVarPointer(VAR_STARTER_MON) = gSpecialVar_Result;
     starterMon = GetStarterPokemon(gSpecialVar_Result);
-    ScriptGiveMon(starterMon, 5, ITEM_NONE, 0, 0, 0);
+    // HACKROM (Forest of Love, provisório): o inicial é sempre fêmea. A taxa de
+    // gênero da espécie NÃO muda (87,5% macho continua no species_info); só o
+    // Pokémon entregue aqui tem a personalidade sorteada até sair fêmea, com
+    // natureza aleatória.
+    {
+        struct Pokemon starter;
+        u16 nationalDexNum = SpeciesToNationalPokedexNum(starterMon);
+
+        CreateMonWithGenderNatureLetter(&starter, starterMon, 5, USE_RANDOM_IVS, MON_FEMALE, Random() % NUM_NATURES, 0);
+        if (GiveMonToPlayer(&starter) != MON_CANT_GIVE)
+        {
+            GetSetPokedexFlag(nationalDexNum, FLAG_SET_SEEN);
+            GetSetPokedexFlag(nationalDexNum, FLAG_SET_CAUGHT);
+        }
+    }
     ResetTasks();
     PlayBattleBGM();
     SetMainCallback2(CB2_StartFirstBattle);

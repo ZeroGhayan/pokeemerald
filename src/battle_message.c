@@ -121,6 +121,11 @@ static const u8 sText_PkmnCreamingHerself[] = _("{B_DEF_NAME_WITH_PREFIX}\nis cr
 static const u8 sText_PkmnFocusReturned[] = _("{B_SCR_ACTIVE_NAME_WITH_PREFIX}'s\nfocus returned!"); // 3->2
 static const u8 sText_PkmnLostInterest[] = _("{B_SCR_ACTIVE_NAME_WITH_PREFIX}\nlost its interest!"); // 2->1
 static const u8 sText_PkmnIsntFriendlyAnymore[] = _("{B_SCR_ACTIVE_NAME_WITH_PREFIX}\nisn't friendly anymore!"); // 1->0
+// HACKROM: Infatuation sem alvo em campo (veio de outra batalha, ou quem
+// causou saiu). O texto mostra a intensidade no lugar do alvo.
+static const u8 sText_PkmnIsInLoveLv1[] = _("{B_ATK_NAME_WITH_PREFIX}\nis in love!");
+static const u8 sText_PkmnIsInLoveLv2[] = _("{B_ATK_NAME_WITH_PREFIX}\nis so in love!");
+static const u8 sText_PkmnIsInLoveLv3[] = _("{B_ATK_NAME_WITH_PREFIX}\nis really in love!");
 static const u8 sText_PkmnInLove[] = _("{B_ATK_NAME_WITH_PREFIX} is in love\nwith {B_SCR_ACTIVE_NAME_WITH_PREFIX}!");
 static const u8 sText_PkmnImmobilizedByLove[] = _("{B_ATK_NAME_WITH_PREFIX} is\nimmobilized by love!");
 static const u8 sText_PkmnBlownAway[] = _("{B_DEF_NAME_WITH_PREFIX} was\nblown away!");
@@ -527,6 +532,16 @@ const u16 gInfatuationLevelUpStringIds[] = {
     STRINGID_PKMNCREAMINGHERSELF, // 2 -> 3
 };
 
+// HACKROM: texto do "está apaixonado" a cada turno.
+// 0 = alvo válido em campo -> texto da pret "X is in love with Y!"
+// 1-3 = sem alvo válido -> texto pela intensidade
+const u16 gInLoveStringIds[] = {
+    STRINGID_PKMNINLOVE,
+    STRINGID_PKMNISINLOVE_LV1,
+    STRINGID_PKMNISINLOVE_LV2,
+    STRINGID_PKMNISINLOVE_LV3,
+};
+
 const u16 gInfatuationLevelDownStringIds[] = {
     STRINGID_PKMNISNTFRIENDLYANYMORE, // 1 -> 0
     STRINGID_PKMNLOSTINTEREST,        // 2 -> 1
@@ -598,6 +613,9 @@ const u8 *const gBattleStringsTable[BATTLESTRINGS_COUNT - BATTLESTRINGS_TABLE_ST
     [STRINGID_PKMNFOCUSRETURNED - BATTLESTRINGS_TABLE_START] = sText_PkmnFocusReturned,
     [STRINGID_PKMNLOSTINTEREST - BATTLESTRINGS_TABLE_START] = sText_PkmnLostInterest,
     [STRINGID_PKMNISNTFRIENDLYANYMORE - BATTLESTRINGS_TABLE_START] = sText_PkmnIsntFriendlyAnymore,
+    [STRINGID_PKMNISINLOVE_LV1 - BATTLESTRINGS_TABLE_START] = sText_PkmnIsInLoveLv1,
+    [STRINGID_PKMNISINLOVE_LV2 - BATTLESTRINGS_TABLE_START] = sText_PkmnIsInLoveLv2,
+    [STRINGID_PKMNISINLOVE_LV3 - BATTLESTRINGS_TABLE_START] = sText_PkmnIsInLoveLv3,
     [STRINGID_PKMNINLOVE - BATTLESTRINGS_TABLE_START] = sText_PkmnInLove,
     [STRINGID_PKMNIMMOBILIZEDBYLOVE - BATTLESTRINGS_TABLE_START] = sText_PkmnImmobilizedByLove,
     [STRINGID_PKMNBLOWNAWAY - BATTLESTRINGS_TABLE_START] = sText_PkmnBlownAway,

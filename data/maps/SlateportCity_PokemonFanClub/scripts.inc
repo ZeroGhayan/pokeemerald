@@ -216,7 +216,7 @@ SlateportCity_PokemonFanClub_EventScript_Skitty::
 	lock
 	faceplayer
 	waitse
-	playmoncry SPECIES_SKITTY, CRY_MODE_NORMAL
+	playmoncry SPECIES_EEVEE, CRY_MODE_NORMAL
 	msgbox SlateportCity_PokemonFanClub_Text_Skitty, MSGBOX_DEFAULT
 	waitmoncry
 	release
@@ -226,7 +226,7 @@ SlateportCity_PokemonFanClub_EventScript_Zigzagoon::
 	lock
 	faceplayer
 	waitse
-	playmoncry SPECIES_ZIGZAGOON, CRY_MODE_NORMAL
+	playmoncry SPECIES_RATTATA, CRY_MODE_NORMAL
 	msgbox SlateportCity_PokemonFanClub_Text_Zigzagoon, MSGBOX_DEFAULT
 	waitmoncry
 	release
@@ -236,7 +236,7 @@ SlateportCity_PokemonFanClub_EventScript_Azumarill::
 	lock
 	faceplayer
 	waitse
-	playmoncry SPECIES_AZUMARILL, CRY_MODE_NORMAL
+	playmoncry SPECIES_GOLDUCK, CRY_MODE_NORMAL
 	msgbox SlateportCity_PokemonFanClub_Text_Azumarill, MSGBOX_DEFAULT
 	waitmoncry
 	release

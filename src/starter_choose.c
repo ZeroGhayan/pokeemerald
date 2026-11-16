@@ -110,11 +110,15 @@ static const u8 sStarterLabelCoords[STARTER_MON_COUNT][2] =
     {8, 4},
 };
 
+// HACKROM (Forest of Love): iniciais de Kanto, na mesma ordem Grama/Fogo/Água
+// dos originais (Treecko/Torchic/Mudkip). Os times do rival em
+// trainer_parties.h foram remapeados com a mesma ordem, então a lógica
+// "rival escolhe o inicial com vantagem de tipo" continua igual.
 static const u16 sStarterMon[STARTER_MON_COUNT] =
 {
-    SPECIES_TREECKO,
-    SPECIES_TORCHIC,
-    SPECIES_MUDKIP,
+    SPECIES_BULBASAUR,
+    SPECIES_CHARMANDER,
+    SPECIES_SQUIRTLE,
 };
 
 static const struct BgTemplate sBgTemplates[3] =

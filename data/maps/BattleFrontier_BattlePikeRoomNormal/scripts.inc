@@ -287,7 +287,7 @@ BattleFrontier_BattlePikeRoomNormal_EventScript_KirliaAttack::
 	msgbox BattleFrontier_BattlePikeRoomNormal_Text_KirliaStop, MSGBOX_DEFAULT
 	closemessage
 	waitse
-	playmoncry SPECIES_KIRLIA, CRY_MODE_NORMAL
+	playmoncry SPECIES_DROWZEE, CRY_MODE_NORMAL
 	waitmoncry
 	pike_getstatus
 	call_if_eq VAR_RESULT, PIKE_STATUS_TOXIC, BattleFrontier_BattlePikeRoomNormal_EventScript_KirliaUsedToxic
@@ -301,11 +301,11 @@ BattleFrontier_BattlePikeRoomNormal_EventScript_KirliaAttack::
 	applymovement LOCALID_PIKE_ROOM_NPC_2, BattleFrontier_BattlePikeRoomNormal_Movement_MonFaceNPC
 	waitmovement 0
 	waitse
-	playmoncry SPECIES_KIRLIA, CRY_MODE_NORMAL
+	playmoncry SPECIES_DROWZEE, CRY_MODE_NORMAL
 	waitmoncry
 	msgbox BattleFrontier_BattlePikeRoomNormal_Text_ThatsEnough, MSGBOX_DEFAULT
 	waitse
-	playmoncry SPECIES_KIRLIA, CRY_MODE_NORMAL
+	playmoncry SPECIES_DROWZEE, CRY_MODE_NORMAL
 	waitmoncry
 	closemessage
 	applymovement LOCALID_PIKE_ROOM_NPC_2, BattleFrontier_BattlePikeRoomNormal_Movement_MonMoveAside
@@ -318,7 +318,7 @@ BattleFrontier_BattlePikeRoomNormal_EventScript_DusclopsAttack::
 	msgbox BattleFrontier_BattlePikeRoomNormal_Text_DusclopsStop, MSGBOX_DEFAULT
 	closemessage
 	waitse
-	playmoncry SPECIES_DUSCLOPS, CRY_MODE_NORMAL
+	playmoncry SPECIES_HAUNTER, CRY_MODE_NORMAL
 	waitmoncry
 	pike_getstatus
 	call_if_eq VAR_RESULT, PIKE_STATUS_FREEZE, BattleFrontier_BattlePikeRoomNormal_EventScript_DusclopsUsedIceBeam
@@ -330,11 +330,11 @@ BattleFrontier_BattlePikeRoomNormal_EventScript_DusclopsAttack::
 	applymovement LOCALID_PIKE_ROOM_NPC_2, BattleFrontier_BattlePikeRoomNormal_Movement_MonFaceNPC
 	waitmovement 0
 	waitse
-	playmoncry SPECIES_DUSCLOPS, CRY_MODE_NORMAL
+	playmoncry SPECIES_HAUNTER, CRY_MODE_NORMAL
 	waitmoncry
 	msgbox BattleFrontier_BattlePikeRoomNormal_Text_ThatsEnough, MSGBOX_DEFAULT
 	waitse
-	playmoncry SPECIES_DUSCLOPS, CRY_MODE_NORMAL
+	playmoncry SPECIES_HAUNTER, CRY_MODE_NORMAL
 	waitmoncry
 	closemessage
 	applymovement LOCALID_PIKE_ROOM_NPC_2, BattleFrontier_BattlePikeRoomNormal_Movement_MonMoveAside

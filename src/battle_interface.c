@@ -871,7 +871,6 @@ static void UNUSED Debug_DrawNumberPair(s16 number1, s16 number2, u16 *dest)
 #define TAG_INFATUATION_BATTLE 0xD700
 
 static u8 sInfatuationBattleSpriteIds[MAX_BATTLERS_COUNT];
-static bool8 sInfatuationBattleGfxLoaded;
 
 static const struct OamData sOamData_InfatuationBattle =
 {
@@ -919,68 +918,94 @@ static const struct SpriteTemplate sSpriteTemplate_InfatuationBattle =
     .callback = SpriteCallbackDummy,
 };
 
+// HACKROM (Forest of Love): posição do ícone de Infatuation em relação ao
+// CENTRO do sprite esquerdo do healthbox (o mesmo sprite onde o jogo desenha
+// o ícone de status BRN/PSN/SLP/PAR/FRZ). O ícone tem 32x8 (arte de até 22 px).
+// Cálculo (coordenadas do PNG do healthbox, que é o layout real):
+// - Jogador, simples: status em x16-39 / y24-31 (tile 0x1A). O sprite é
+//   criado como 64x32 e só depois vira 64x64, então a referência (x,y) do
+//   sprite continua sendo o ponto 32,16. O ícone fica colado à direita do
+//   status: x40, y24.
+// - Oponente (simples/duplas): status em x8-31 / y16-23 (tile 0x11 do sprite
+//   64x32, centro 32,16), na linha da barra de HP. À direita está a barra,
+//   então o ícone fica logo ABAIXO do status, na moldura inferior: x8, y24.
+// - Jogador, duplas: status em x16-39 / y16-23 (tile 0x12). Mesmo caso do
+//   oponente: logo abaixo do status, x16, y24.
+// Para mudar a posição, altere só esta tabela (xOff, yOff).
+#define INFAT_ICON_W 32
+#define INFAT_ICON_H 8
+static const s8 sInfatuationIconOffsets[3][2] =
+{
+    [0] = { 40 + INFAT_ICON_W / 2 - 32, 24 + INFAT_ICON_H / 2 - 16 }, // jogador, simples
+    [1] = {  8 + INFAT_ICON_W / 2 - 32, 24 + INFAT_ICON_H / 2 - 16 }, // oponente
+    [2] = { 16 + INFAT_ICON_W / 2 - 32, 24 + INFAT_ICON_H / 2 - 16 }, // jogador, duplas
+};
+
 static void SpriteCB_InfatuationBattleIcon(struct Sprite *sprite)
 {
     u8 healthboxSpriteId = sprite->data[0];
-    s16 xOff = sprite->data[2];
-    s16 yOff = sprite->data[3];
 
-    if (healthboxSpriteId == SPRITE_NONE)
+    if (healthboxSpriteId >= MAX_SPRITES || !gSprites[healthboxSpriteId].inUse)
     {
         sprite->invisible = TRUE;
         return;
     }
-    sprite->x = gSprites[healthboxSpriteId].x + xOff;
-    sprite->y = gSprites[healthboxSpriteId].y + yOff;
+    // Segue o healthbox exatamente como o ícone de status (que é desenhado
+    // dentro dos tiles do healthbox): mesma posição, mesmo deslize de entrada,
+    // mesmo "balanço" ao escolher a ação e some junto quando ele some.
+    sprite->x = gSprites[healthboxSpriteId].x + sprite->data[2];
+    sprite->y = gSprites[healthboxSpriteId].y + sprite->data[3];
     sprite->x2 = gSprites[healthboxSpriteId].x2;
     sprite->y2 = gSprites[healthboxSpriteId].y2;
-    // data[4] = 1 means force hidden (level 0)
-    if (sprite->data[4] || gSprites[healthboxSpriteId].invisible)
-        sprite->invisible = TRUE;
+    // data[4] = TRUE -> nível 0 (sem Infatuation)
+    sprite->invisible = (sprite->data[4] || gSprites[healthboxSpriteId].invisible);
 }
 
 static void LoadInfatuationBattleGfx(void)
 {
-    if (!sInfatuationBattleGfxLoaded)
-    {
-        u8 i;
+    // A pret apaga todas as sprite sheets/paletas entre uma batalha e outra,
+    // então a checagem é pelo tag (antes era uma flag estática que ficava TRUE
+    // para sempre e, a partir da 2ª batalha, o ícone usava tiles errados).
+    if (GetSpriteTileStartByTag(TAG_INFATUATION_BATTLE) == 0xFFFF)
         LoadCompressedSpriteSheet(&sSpriteSheet_InfatuationBattle);
+    if (IndexOfSpritePaletteTag(TAG_INFATUATION_BATTLE) == 0xFF)
         LoadCompressedSpritePalette(&sSpritePalette_InfatuationBattle);
-        for (i = 0; i < MAX_BATTLERS_COUNT; i++)
-            sInfatuationBattleSpriteIds[i] = SPRITE_NONE;
-        sInfatuationBattleGfxLoaded = TRUE;
-    }
 }
 
 static void CreateInfatuationBattleIcon(u8 battler, u8 healthboxSpriteId)
 {
-    s16 xOff, yOff;
-    u8 spriteId;
+    u8 spriteId, layout;
 
+    if (battler >= MAX_BATTLERS_COUNT)
+        return;
+    if (battler == 0)
+    {
+        u8 i;
+        for (i = 0; i < MAX_BATTLERS_COUNT; i++)
+            sInfatuationBattleSpriteIds[i] = SPRITE_NONE;
+    }
     LoadInfatuationBattleGfx();
 
-    // Position roughly to the right of the STATUS1 icon slot
-    if (GetBattlerSide(battler) == B_SIDE_PLAYER)
-    {
-        xOff = IsDoubleBattle() ? 48 : 56;
-        yOff = IsDoubleBattle() ? -8 : -10;
-    }
+    if (GetBattlerSide(battler) != B_SIDE_PLAYER)
+        layout = 1;
+    else if (IsDoubleBattle())
+        layout = 2;
     else
-    {
-        xOff = -8;
-        yOff = -8;
-    }
+        layout = 0;
 
     spriteId = CreateSprite(&sSpriteTemplate_InfatuationBattle, 0, 0, 0);
+    if (spriteId == MAX_SPRITES)
+        return;
     sInfatuationBattleSpriteIds[battler] = spriteId;
     gSprites[spriteId].callback = SpriteCB_InfatuationBattleIcon;
     gSprites[spriteId].data[0] = healthboxSpriteId;
     gSprites[spriteId].data[1] = battler;
-    gSprites[spriteId].data[2] = xOff;
-    gSprites[spriteId].data[3] = yOff;
-    gSprites[spriteId].data[4] = TRUE; // start hidden
+    gSprites[spriteId].data[2] = sInfatuationIconOffsets[layout][0];
+    gSprites[spriteId].data[3] = sInfatuationIconOffsets[layout][1];
+    gSprites[spriteId].data[4] = TRUE; // começa escondido
     gSprites[spriteId].invisible = TRUE;
     gSprites[spriteId].oam.priority = 1;
+    gSprites[spriteId].callback(&gSprites[spriteId]);
 }
 
 void UpdateInfatuationBattleIcon(u8 battler)
@@ -991,14 +1016,13 @@ void UpdateInfatuationBattleIcon(u8 battler)
     if (battler >= MAX_BATTLERS_COUNT)
         return;
     spriteId = sInfatuationBattleSpriteIds[battler];
-    if (spriteId == SPRITE_NONE || spriteId >= MAX_SPRITES)
+    if (spriteId == SPRITE_NONE || spriteId >= MAX_SPRITES || !gSprites[spriteId].inUse)
         return;
 
     level = GetBattlerInfatuationLevel(battler);
     if (level == 0)
     {
         gSprites[spriteId].data[4] = TRUE;
-        gSprites[spriteId].invisible = TRUE;
     }
     else
     {
@@ -1006,8 +1030,8 @@ void UpdateInfatuationBattleIcon(u8 battler)
             level = 3;
         StartSpriteAnim(&gSprites[spriteId], level - 1);
         gSprites[spriteId].data[4] = FALSE;
-        gSprites[spriteId].invisible = FALSE;
     }
+    gSprites[spriteId].callback(&gSprites[spriteId]);
 }
 
 

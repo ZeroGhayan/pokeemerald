@@ -55,4 +55,21 @@
 #endif
 #endif
 
+// HACKROM (Forest of Love): desliga TODAS as animações de frente dos Pokémon
+// (troca de frame + animações de movimento em batalha, resumo, Poké Ball,
+// evolução, ovo, Hall da Fama, concursos e na intro do Birch). O cry continua
+// tocando normalmente. Comente a linha abaixo para voltar ao comportamento da pret.
+// As animações de costas (BattleAnimateBackSprite) NÃO são afetadas.
+#define FOL_NO_FRONT_ANIMS
+
+// HACKROM (Forest of Love): golpes de HM podem ser esquecidos (resumo, level
+// up, evolução e Move Deleter). Comente para voltar ao bloqueio da pret.
+#define FOL_HMS_FORGETTABLE
+
+// HACKROM (Forest of Love): todo Pokémon criado dentro do jogo (selvagem,
+// presente, estático, troca in-game, treinadores, iniciais, ovos) nasce
+// fêmea. A taxa de gênero da espécie continua valendo para Pokémon que
+// chegam de outro jogo por troca (única forma de ter macho). FALSE desliga.
+#define FOL_FORCE_FEMALE_INGAME TRUE
+
 #endif // GUARD_CONFIG_H

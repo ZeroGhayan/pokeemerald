@@ -321,3 +321,9 @@ const u32 gMonBackPic_WeezingF[] = INCGFX_U32("graphics/pokemon/weezing/back_f.p
 const u32 gMonBackPic_WigglytuffF[] = INCGFX_U32("graphics/pokemon/wigglytuff/back_f.png", ".4bpp.lz");
 const u32 gMonBackPic_ZapdosF[] = INCGFX_U32("graphics/pokemon/zapdos/back_f.png", ".4bpp.lz");
 const u32 gMonBackPic_ZubatF[] = INCGFX_U32("graphics/pokemon/zubat/back_f.png", ".4bpp.lz");
+
+// HACKROM: paletas das fêmeas (normal_f.pal / shiny_f.pal), geradas por
+// tools/female_palettes.py.
+#define FOL_FEMALE_PAL_DATA
+#include "female_palettes.h"
+#undef FOL_FEMALE_PAL_DATA

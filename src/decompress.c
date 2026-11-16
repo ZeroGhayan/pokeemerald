@@ -89,7 +89,7 @@ extern const struct CompressedSpriteSheet gMonBackPicTableFemale[];
 
 static const u32 *GetGenderedPicData(const struct CompressedSpriteSheet *src, s32 species, u32 personality, bool8 isFrontPic)
 {
-    if (species > 0 && species <= NUM_SPECIES
+    if (species > 0 && species < NUM_SPECIES // HACKROM: '<', SPECIES_EGG (= NUM_SPECIES) não tem sprite feminina
         && GetGenderFromSpeciesAndPersonality(species, personality) == MON_FEMALE)
     {
         const u32 *femaleData;
