@@ -62,4 +62,8 @@
 // As animações de costas (BattleAnimateBackSprite) NÃO são afetadas.
 #define FOL_NO_FRONT_ANIMS
 
+// HACKROM (Forest of Love): golpes de HM podem ser esquecidos (resumo, level
+// up, evolução e Move Deleter). Comente para voltar ao bloqueio da pret.
+#define FOL_HMS_FORGETTABLE
+
 #endif // GUARD_CONFIG_H

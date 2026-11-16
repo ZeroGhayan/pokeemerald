@@ -6585,6 +6585,12 @@ const struct CompressedSpritePalette *GetMonSpritePalStructFromOtIdPersonality(u
 bool32 IsHMMove2(u16 move)
 {
     int i = 0;
+
+#ifdef FOL_HMS_FORGETTABLE
+    // HACKROM: golpes de HM podem ser esquecidos (level up na batalha,
+    // evolução). Os HMs continuam na mochila para reensinar.
+    return FALSE;
+#endif
     while (sHMMoves[i] != HM_MOVES_END)
     {
         if (sHMMoves[i++] == move)
