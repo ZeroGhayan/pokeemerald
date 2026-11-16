@@ -383,8 +383,11 @@
 #define STRINGID_PKMNFOCUSRETURNED          383 // HACKROM Infatuation 3->2
 #define STRINGID_PKMNLOSTINTEREST           384 // HACKROM Infatuation 2->1
 #define STRINGID_PKMNISNTFRIENDLYANYMORE    385 // HACKROM Infatuation 1->0
+#define STRINGID_PKMNISINLOVE_LV1           386 // HACKROM: "is in love" (sem alvo)
+#define STRINGID_PKMNISINLOVE_LV2           387 // HACKROM: "is so in love"
+#define STRINGID_PKMNISINLOVE_LV3           388 // HACKROM: "is really in love"
 
-#define BATTLESTRINGS_COUNT                 386
+#define BATTLESTRINGS_COUNT                 389
 
 // This is the string id that gBattleStringsTable starts with.
 // String ids before this (e.g. STRINGID_INTROMSG) are not in the table,

@@ -299,5 +299,6 @@ extern const u16 gTrappingMoves[];
 
 extern const u16 gInfatuationLevelUpStringIds[];
 extern const u16 gInfatuationLevelDownStringIds[];
+extern const u16 gInLoveStringIds[];
 
 #endif // GUARD_BATTLE_MESSAGE_H

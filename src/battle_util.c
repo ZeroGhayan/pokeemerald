@@ -2301,10 +2301,25 @@ u8 AtkCanceler_UnableToUseMove(void)
                     else
                         failChance = 70;
 
+                    // HACKROM: só usa o texto "in love with <alvo>" se o alvo
+                    // existe de verdade: bit de status2 setado, não é o próprio
+                    // Pokémon, está em campo e com HP. Senão (Infatuation que
+                    // veio de outra batalha, ou quem causou saiu/desmaiou) o
+                    // texto mostra a intensidade: in love / so in love / really in love.
+                    gBattleScripting.battler = gBattlerAttacker;
+                    gBattleCommunication[MULTISTRING_CHOOSER] = loveLevel; // 1-3
                     if (gBattleMons[gBattlerAttacker].status2 & STATUS2_INFATUATION)
-                        gBattleScripting.battler = CountTrailingZeroBits((gBattleMons[gBattlerAttacker].status2 & STATUS2_INFATUATION) >> 0x10);
-                    else
-                        gBattleScripting.battler = gBattlerAttacker;
+                    {
+                        u8 loveTarget = CountTrailingZeroBits((gBattleMons[gBattlerAttacker].status2 & STATUS2_INFATUATION) >> 0x10);
+                        if (loveTarget < gBattlersCount
+                         && loveTarget != gBattlerAttacker
+                         && !(gAbsentBattlerFlags & gBitTable[loveTarget])
+                         && gBattleMons[loveTarget].hp != 0)
+                        {
+                            gBattleScripting.battler = loveTarget;
+                            gBattleCommunication[MULTISTRING_CHOOSER] = 0;
+                        }
+                    }
 
                     if ((Random() % 100) < failChance)
                     {

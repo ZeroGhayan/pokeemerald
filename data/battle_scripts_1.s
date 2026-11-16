@@ -3839,7 +3839,8 @@ BattleScript_WrapEnds::
 	end2
 
 BattleScript_MoveUsedIsInLove::
-	printstring STRINGID_PKMNINLOVE
+	@ HACKROM: MULTISTRING_CHOOSER definido em CANCELER_IN_LOVE (0 = com alvo, 1-3 = intensidade)
+	printfromtable gInLoveStringIds
 	waitmessage B_WAIT_TIME_LONG
 	status2animation BS_ATTACKER, STATUS2_INFATUATION
 	return
