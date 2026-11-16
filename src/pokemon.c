@@ -2203,6 +2203,58 @@ void CreateMon(struct Pokemon *mon, u16 species, u8 level, u8 fixedIV, u8 hasFix
     CalculateMonStats(mon);
 }
 
+#if FOL_FORCE_FEMALE_INGAME
+// HACKROM (Forest of Love): devolve uma personalidade de FÊMEA para a espécie,
+// mantendo o que a personalidade original já decidia:
+// - a mesma natureza (personality % 25): Synchronize, CreateMonWithNature,
+//   times de treinador etc. continuam com a natureza pedida;
+// - o mesmo estado shiny/não shiny com este OT (inclusive o
+//   OT_ID_RANDOM_NO_SHINY, que nunca vira shiny).
+// A habilidade (bit 0) é sorteada junto, como em qualquer personalidade nova.
+// Não mexe em: espécie sem chance de fêmea (MON_MALE), só fêmea
+// (MON_FEMALE), sem gênero (MON_GENDERLESS), Unown (letra vem da
+// personalidade) e personalidade que já é fêmea.
+static u32 FemalePersonality(u16 species, u32 personality, u32 otId)
+{
+    u8 ratio, nature;
+    bool8 shiny;
+    u16 otXor, lo, hi;
+    u32 cand;
+    s32 tries;
+
+    if (species == SPECIES_NONE || species >= NUM_SPECIES || species == SPECIES_UNOWN)
+        return personality;
+    ratio = gSpeciesInfo[species].genderRatio;
+    if (ratio == MON_MALE || ratio == MON_FEMALE || ratio == MON_GENDERLESS)
+        return personality;
+    if ((personality & 0xFF) < ratio)
+        return personality; // já é fêmea
+
+    nature = personality % NUM_NATURES;
+    shiny = (GET_SHINY_VALUE(otId, personality) < SHINY_ODDS);
+    otXor = HIHALF(otId) ^ LOHALF(otId);
+
+    for (tries = 0; tries < 2000; tries++)
+    {
+        // Byte baixo < ratio = fêmea (GetGenderFromSpeciesAndPersonality).
+        lo = (Random() & 0xFF00) | (Random() % ratio);
+        if (shiny)
+            hi = lo ^ otXor ^ (Random() % SHINY_ODDS); // valor shiny < 8
+        else
+            hi = Random();
+        cand = ((u32)hi << 16) | lo;
+        if (cand % NUM_NATURES != nature)
+            continue;
+        if ((GET_SHINY_VALUE(otId, cand) < SHINY_ODDS) != shiny)
+            continue;
+        return cand;
+    }
+    // Praticamente impossível chegar aqui (~25 tentativas em média). Garante
+    // pelo menos o gênero, mesmo que a natureza mude.
+    return (personality & ~0xFF) | (Random() % ratio);
+}
+#endif
+
 void CreateBoxMon(struct BoxPokemon *boxMon, u16 species, u8 level, u8 fixedIV, u8 hasFixedPersonality, u32 fixedPersonality, u8 otIdType, u32 fixedOtId)
 {
     u8 speciesName[POKEMON_NAME_LENGTH + 1];
@@ -2216,8 +2268,6 @@ void CreateBoxMon(struct BoxPokemon *boxMon, u16 species, u8 level, u8 fixedIV, 
         personality = fixedPersonality;
     else
         personality = Random32();
-
-    SetBoxMonData(boxMon, MON_DATA_PERSONALITY, &personality);
 
     // Determine original trainer ID
     if (otIdType == OT_ID_RANDOM_NO_SHINY)
@@ -2242,6 +2292,11 @@ void CreateBoxMon(struct BoxPokemon *boxMon, u16 species, u8 level, u8 fixedIV, 
               | (gSaveBlock2Ptr->playerTrainerId[3] << 24);
     }
 
+#if FOL_FORCE_FEMALE_INGAME
+    // HACKROM: todo Pokémon criado no jogo nasce fêmea (ver FemalePersonality).
+    personality = FemalePersonality(species, personality, value);
+#endif
+    SetBoxMonData(boxMon, MON_DATA_PERSONALITY, &personality);
     SetBoxMonData(boxMon, MON_DATA_OT_ID, &value);
 
     checksum = CalculateBoxMonChecksum(boxMon);

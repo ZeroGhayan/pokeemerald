@@ -66,4 +66,10 @@
 // up, evolução e Move Deleter). Comente para voltar ao bloqueio da pret.
 #define FOL_HMS_FORGETTABLE
 
+// HACKROM (Forest of Love): todo Pokémon criado dentro do jogo (selvagem,
+// presente, estático, troca in-game, treinadores, iniciais, ovos) nasce
+// fêmea. A taxa de gênero da espécie continua valendo para Pokémon que
+// chegam de outro jogo por troca (única forma de ter macho). FALSE desliga.
+#define FOL_FORCE_FEMALE_INGAME TRUE
+
 #endif // GUARD_CONFIG_H
