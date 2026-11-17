@@ -122,6 +122,14 @@
 #define DECOR_REGIROCK_DOLL    118
 #define DECOR_REGICE_DOLL      119
 #define DECOR_REGISTEEL_DOLL   120
-#define NUM_DECORATIONS DECOR_REGISTEEL_DOLL
+// HACKROM (Forest of Love): esqueleto das novas decorações móveis das casas
+// (bonecos, ornamentos, plantas e almofadas). Gráficos placeholder vanilla;
+// troque .tiles/.name/.description em src/data/decoration/*.h ao criar os
+// gráficos definitivos. Ver docs/casas_fast_travel.md.
+#define DECOR_FOL_DOLL         121
+#define DECOR_FOL_ORNAMENT     122
+#define DECOR_FOL_PLANT        123
+#define DECOR_FOL_CUSHION      124
+#define NUM_DECORATIONS DECOR_FOL_CUSHION
 
 #endif  // GUARD_CONSTANTS_DECORATIONS_H

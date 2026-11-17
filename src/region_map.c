@@ -1,4 +1,5 @@
 #include "global.h"
+#include "fol_houses.h"
 #include "main.h"
 #include "text.h"
 #include "menu.h"
@@ -1603,6 +1604,13 @@ u8 *GetMapNameGeneric(u8 *dest, mapsec_u16_t mapSecId)
     switch (mapSecId)
     {
     case MAPSEC_DYNAMIC:
+        // HACKROM (Forest of Love): na casa de viagem e no B1F dos Centros
+        // (mapas compartilhados), mostra a cidade de onde o jogador veio.
+        {
+            mapsec_u16_t realMapSec;
+            if (FolMaps_GetRealMapSec(&realMapSec))
+                return GetMapName(dest, realMapSec, 0);
+        }
         return StringCopy(dest, gText_Ferry);
     case MAPSEC_SECRET_BASE:
         return StringCopy(dest, gText_SecretBase);

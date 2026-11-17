@@ -1450,5 +1450,55 @@ const struct Decoration gDecorations[] =
         .price = 10000,
         .description = DecorDesc_REGISTEEL_DOLL,
         .tiles = DecorGfx_REGISTEEL_DOLL,
-    }
+    },
+
+    // HACKROM (Forest of Love): esqueleto das novas categorias móveis das casas.
+    // Gráficos placeholder (reaproveitam os de decorações vanilla).
+    [DECOR_FOL_DOLL] =
+    {
+        .id = DECOR_FOL_DOLL,
+        .name = _("FOL DOLL"),
+        .permission = DECORPERM_SPRITE,
+        .shape = DECORSHAPE_1x1,
+        .category = DECORCAT_DOLL,
+        .price = 3000,
+        .description = DecorDesc_FOL_DOLL,
+        .tiles = DecorGfx_PIKACHU_DOLL,
+    },
+
+    [DECOR_FOL_ORNAMENT] =
+    {
+        .id = DECOR_FOL_ORNAMENT,
+        .name = _("FOL ORNAMENT"),
+        .permission = DECORPERM_BEHIND_FLOOR,
+        .shape = DECORSHAPE_1x2,
+        .category = DECORCAT_ORNAMENT,
+        .price = 3000,
+        .description = DecorDesc_FOL_ORNAMENT,
+        .tiles = DecorGfx_GLASS_ORNAMENT,
+    },
+
+    [DECOR_FOL_PLANT] =
+    {
+        .id = DECOR_FOL_PLANT,
+        .name = _("FOL PLANT"),
+        .permission = DECORPERM_BEHIND_FLOOR,
+        .shape = DECORSHAPE_1x2,
+        .category = DECORCAT_PLANT,
+        .price = 3000,
+        .description = DecorDesc_FOL_PLANT,
+        .tiles = DecorGfx_RED_PLANT,
+    },
+
+    [DECOR_FOL_CUSHION] =
+    {
+        .id = DECOR_FOL_CUSHION,
+        .name = _("FOL CUSHION"),
+        .permission = DECORPERM_SPRITE,
+        .shape = DECORSHAPE_1x1,
+        .category = DECORCAT_CUSHION,
+        .price = 2000,
+        .description = DecorDesc_FOL_CUSHION,
+        .tiles = DecorGfx_PIKA_CUSHION,
+    },
 };

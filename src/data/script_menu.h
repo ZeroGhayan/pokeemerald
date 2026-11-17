@@ -791,6 +791,34 @@ static const struct MenuAction MultichoiceList_FolItemShop[] =
     {gText_Exit},
 };
 
+// HACKROM (Forest of Love): casas de viagem rápida
+static const u8 sText_FolFastTravel[] = _("FAST TRAVEL");
+static const u8 sText_FolDecoration[] = _("DECORATION");
+static const u8 sText_FolTurnOff[] = _("TURN OFF");
+static const u8 sText_FolFixed[] = _("FIXED");
+static const u8 sText_FolMovable[] = _("MOVABLE");
+static const u8 sText_FolEnter[] = _("ENTER");
+
+static const struct MenuAction MultichoiceList_FolHousePC[] =
+{
+    {sText_FolFastTravel},
+    {sText_FolDecoration},
+    {sText_FolTurnOff},
+};
+
+static const struct MenuAction MultichoiceList_FolHouseDecor[] =
+{
+    {sText_FolFixed},
+    {sText_FolMovable},
+    {gText_Cancel},
+};
+
+static const struct MenuAction MultichoiceList_FolHouseAgent[] =
+{
+    {sText_FolEnter},
+    {gText_Exit},
+};
+
 static const struct MenuAction MultichoiceList_TagMatchType[] =
 {
     {gText_NormalTagMatch},
@@ -930,6 +958,9 @@ static const struct MultichoiceListStruct sMultichoiceLists[] =
     [MULTI_FOL_SIM_MODE]               = MULTICHOICE(MultichoiceList_FolSimMode),
     [MULTI_FOL_DECOR_SHOP]             = MULTICHOICE(MultichoiceList_FolDecorShop),
     [MULTI_FOL_ITEM_SHOP]              = MULTICHOICE(MultichoiceList_FolItemShop),
+    [MULTI_FOL_HOUSE_PC]               = MULTICHOICE(MultichoiceList_FolHousePC),
+    [MULTI_FOL_HOUSE_DECOR]            = MULTICHOICE(MultichoiceList_FolHouseDecor),
+    [MULTI_FOL_HOUSE_AGENT]            = MULTICHOICE(MultichoiceList_FolHouseAgent),
 };
 
 const u8 *const gStdStrings[] =

@@ -492,7 +492,8 @@
     "BattlePyramidSquare14",
     "BattlePyramidSquare15",
     "BattlePyramidSquare16",
-    "UnionRoom"
+    "UnionRoom",
+    "FolHouse"
   ],
   "gMapGroup_SpecialArea": [
     "SafariZone_Northwest",

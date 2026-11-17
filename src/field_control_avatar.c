@@ -1,4 +1,5 @@
 #include "global.h"
+#include "fol_houses.h"
 #include "battle_setup.h"
 #include "bike.h"
 #include "coord_event_weather.h"
@@ -227,6 +228,7 @@ static bool8 TryStartInteractionScript(struct MapPosition *position, u16 metatil
     if (script != LittlerootTown_BrendansHouse_2F_EventScript_PC
      && script != LittlerootTown_MaysHouse_2F_EventScript_PC
      && script != SecretBase_EventScript_PC
+     && script != FolHouse_EventScript_PC
      && script != SecretBase_EventScript_RecordMixingPC
      && script != SecretBase_EventScript_DollInteract
      && script != SecretBase_EventScript_CushionInteract
@@ -413,7 +415,12 @@ static const u8 *GetInteractedMetatileScript(struct MapPosition *position, u8 me
     if (elevation == MapGridGetElevationAt(position->x, position->y))
     {
         if (MetatileBehavior_IsSecretBasePC(metatileBehavior) == TRUE)
+        {
+            // HACKROM (Forest of Love): PC das casas de viagem rápida.
+            if (FolHouses_IsHouseMap())
+                return FolHouse_EventScript_PC;
             return SecretBase_EventScript_PC;
+        }
         if (MetatileBehavior_IsRecordMixingSecretBasePC(metatileBehavior) == TRUE)
             return SecretBase_EventScript_RecordMixingPC;
         if (MetatileBehavior_IsSecretBaseSandOrnament(metatileBehavior) == TRUE)

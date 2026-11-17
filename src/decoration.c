@@ -1,4 +1,5 @@
 #include "global.h"
+#include "fol_houses.h"
 #include "malloc.h"
 #include "decompress.h"
 #include "decoration.h"
@@ -525,8 +526,8 @@ void InitDecorationContextItems(void)
 
     if (sDecorationContext.isPlayerRoom == TRUE)
     {
-        sDecorationContext.items = gSaveBlock1Ptr->playerRoomDecorations;
-        sDecorationContext.pos = gSaveBlock1Ptr->playerRoomDecorationPositions;
+        sDecorationContext.items = gFolUnusedPlayerRoomDecor;
+        sDecorationContext.pos = gFolUnusedPlayerRoomDecorPos;
     }
 }
 
@@ -591,8 +592,8 @@ void DoSecretBaseDecorationMenu(u8 taskId)
 void DoPlayerRoomDecorationMenu(u8 taskId)
 {
     InitDecorationActionsWindow();
-    sDecorationContext.items = gSaveBlock1Ptr->playerRoomDecorations;
-    sDecorationContext.pos = gSaveBlock1Ptr->playerRoomDecorationPositions;
+    sDecorationContext.items = gFolUnusedPlayerRoomDecor;
+    sDecorationContext.pos = gFolUnusedPlayerRoomDecorPos;
     sDecorationContext.size = DECOR_MAX_PLAYERS_HOUSE;
     sDecorationContext.isPlayerRoom = TRUE;
     gTasks[taskId].func = HandleDecorationActionsMenuInput;
@@ -680,7 +681,11 @@ static void DecorationMenuAction_Cancel(u8 taskId)
     RemoveDecorationWindow(WINDOW_MAIN_MENU);
     if (!sDecorationContext.isPlayerRoom)
     {
-        ScriptContext_SetupScript(SecretBase_EventScript_PCCancel);
+        // HACKROM (Forest of Love): nas casas volta para o menu FIXA/MÓVEL.
+        if (FolHouses_IsHouseMap())
+            ScriptContext_SetupScript(FolHouse_EventScript_PCDecorMenu);
+        else
+            ScriptContext_SetupScript(SecretBase_EventScript_PCCancel);
         DestroyTask(taskId);
     }
     else
@@ -1101,11 +1106,11 @@ static void IdentifyOwnedDecorationsCurrentlyInUseInternal(u8 taskId)
     count = 0;
     for (i = 0; i < ARRAY_COUNT(sPlayerRoomItemsIndicesBuffer); i++)
     {
-        if (gSaveBlock1Ptr->playerRoomDecorations[i] != DECOR_NONE)
+        if (gFolUnusedPlayerRoomDecor[i] != DECOR_NONE)
         {
             for (j = 0; j < gDecorationInventories[sCurDecorationCategory].size; j++)
             {
-                if (gCurDecorationItems[j] == gSaveBlock1Ptr->playerRoomDecorations[i] && IsDecorationIndexInSecretBase(j + 1) != TRUE)
+                if (gCurDecorationItems[j] == gFolUnusedPlayerRoomDecor[i] && IsDecorationIndexInSecretBase(j + 1) != TRUE)
                 {
                     for (k = 0; k < count && sPlayerRoomItemsIndicesBuffer[k] != j + 1; k++);
                     if (k == count)

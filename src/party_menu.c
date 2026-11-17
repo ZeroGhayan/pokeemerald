@@ -2619,6 +2619,11 @@ static void SetPartyMonFieldSelectionActions(struct Pokemon *mons, u8 slotId)
     {
         for (j = 0; sFieldMoves[j] != FIELD_MOVES_COUNT; j++)
         {
+            // HACKROM (Forest of Love): FLY é só de batalha (sem uso no campo e
+            // sem viagem pelo mapa; a viagem rápida é feita pelas casas) e
+            // SECRET POWER não cria mais Secret Bases.
+            if (j == FIELD_MOVE_FLY || j == FIELD_MOVE_SECRET_POWER)
+                continue;
             if (GetMonData(&mons[slotId], i + MON_DATA_MOVE1) == sFieldMoves[j])
             {
                 AppendToList(sPartyMenuInternal->actions, &sPartyMenuInternal->numActions, j + MENU_FIELD_MOVES);

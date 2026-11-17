@@ -578,3 +578,17 @@ gSpecials::
 @ HACKROM (Forest of Love): subsolo dos Centros Pokémon (simulador)
 	def_special FolSimulator_SaveDynamicWarp
 	def_special FolSimulator_RestoreDynamicWarp
+
+@ HACKROM (Forest of Love): casas de viagem rápida (src/fol_houses.c)
+	def_special FolHouse_OnTransition
+	def_special FolHouse_BufferHouseInfo
+	def_special FolHouse_CheckOwned
+	def_special FolHouse_TryBuy
+	def_special FolHouse_PrepareEnter
+	def_special FolHouse_PrepareFastTravel
+	def_special FolHouse_SetFixedDecor
+	def_special FolHouse_GetPcSideOption
+	def_special FolHouse_SetRadioTrack
+	def_special FolHouse_PhoneHook
+	def_special FolHouse_ReturnToTitle, waitstate=1
+	def_special FolHouse_ShowList, waitstate=1

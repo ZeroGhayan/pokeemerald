@@ -1,4 +1,5 @@
 #include "global.h"
+#include "fol_houses.h"
 #include "malloc.h"
 #include "battle.h"
 #include "battle_setup.h"
@@ -383,6 +384,10 @@ void SetOccupiedSecretBaseEntranceMetatiles(struct MapEvents const *events)
     u16 bgId;
     u16 i, j;
 
+    // HACKROM (Forest of Love): criação de Secret Bases desativada; nenhuma
+    // entrada fica aberta (secretBases[1..] guarda os dados das casas).
+    return;
+
     for (bgId = 0; bgId < events->bgEventCount; bgId++)
     {
         if (events->bgEvents[bgId].kind == BG_EVENT_SECRET_BASE)
@@ -512,6 +517,9 @@ bool8 CurMapIsSecretBase(void)
     if (gSaveBlock1Ptr->location.mapGroup == MAP_GROUP(MAP_SECRET_BASE_RED_CAVE1)
      && (u8)gSaveBlock1Ptr->location.mapNum <= MAP_NUM(MAP_SECRET_BASE_SHRUB4))
         return TRUE;
+    // HACKROM (Forest of Love): o interior compartilhado das casas é uma base.
+    else if (FolHouses_IsHouseMap())
+        return TRUE;
     else
         return FALSE;
 }
@@ -522,6 +530,22 @@ void InitSecretBaseAppearance(bool8 hidePC)
     u16 x, y;
     u8 *decorations;
     u8 *decorPos;
+
+    // HACKROM (Forest of Love): casas de viagem rápida. Primeiro as decorações
+    // fixas (slots do PC estilo GSC), depois as móveis de secretBases[0] por
+    // cima. O PC nunca é escondido.
+    if (FolHouses_IsHouseMap())
+    {
+        FolHouses_DrawFixedDecorations();
+        decorations = gSaveBlock1Ptr->secretBases[0].decorations;
+        decorPos = gSaveBlock1Ptr->secretBases[0].decorationPositions;
+        for (x = 0; x < DECOR_MAX_SECRET_BASE; x++)
+        {
+            if (decorations[x] > 0 && decorations[x] <= NUM_DECORATIONS && gDecorations[decorations[x]].permission != DECORPERM_SPRITE)
+                ShowDecorationOnMap((decorPos[x] >> 4) + MAP_OFFSET, (decorPos[x] & 0xF) + MAP_OFFSET, decorations[x]);
+        }
+        return;
+    }
 
     if (CurMapIsSecretBase())
     {
@@ -563,8 +587,9 @@ void InitSecretBaseDecorationSprites(void)
     objectEventId = 0;
     if (!CurMapIsSecretBase())
     {
-        decorations = gSaveBlock1Ptr->playerRoomDecorations;
-        decorationPositions = gSaveBlock1Ptr->playerRoomDecorationPositions;
+        // HACKROM (Forest of Love): playerRoomDecorations virou folFixedDecor.
+        decorations = gFolUnusedPlayerRoomDecor;
+        decorationPositions = gFolUnusedPlayerRoomDecorPos;
         numDecorations = DECOR_MAX_PLAYERS_HOUSE;
     }
     else
@@ -1732,6 +1757,11 @@ void ReceiveSecretBasesData(void *secretBases, size_t recordSize, u8 linkIdx)
 {
     struct SecretBaseRecordMixer mixers[3];
     u16 i;
+
+    // HACKROM (Forest of Love): bases de outros jogadores desativadas: o espaço
+    // de secretBases[1..] agora guarda struct FolHouseSave (casas de viagem).
+    if (TRUE)
+        return;
 
     if (FlagGet(FLAG_RECEIVED_SECRET_POWER))
     {

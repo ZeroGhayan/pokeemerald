@@ -126,6 +126,10 @@
 #define MULTI_FOL_SIM_MODE                 114
 #define MULTI_FOL_DECOR_SHOP               115
 #define MULTI_FOL_ITEM_SHOP                116
+// HACKROM (Forest of Love): casas de viagem rápida
+#define MULTI_FOL_HOUSE_PC                 117
+#define MULTI_FOL_HOUSE_DECOR              118
+#define MULTI_FOL_HOUSE_AGENT              119
 
 // Lilycove SS Tidal Multichoice Selections
 #define SSTIDAL_SELECTION_SLATEPORT        0
