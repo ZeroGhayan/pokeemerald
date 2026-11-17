@@ -520,6 +520,7 @@ gStdScripts_End::
 	.include "data/maps/BattleFrontier_Lounge9/scripts.inc"
 	.include "data/maps/BattleFrontier_PokemonCenter_1F/scripts.inc"
 	.include "data/maps/BattleFrontier_PokemonCenter_2F/scripts.inc"
+	.include "data/maps/PokemonCenter_B1F/scripts.inc"
 	.include "data/maps/BattleFrontier_Mart/scripts.inc"
 	.include "data/maps/FarawayIsland_Entrance/scripts.inc"
 	.include "data/maps/FarawayIsland_Interior/scripts.inc"

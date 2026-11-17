@@ -762,6 +762,35 @@ static const struct MenuAction MultichoiceList_FallarborTentRules[] =
     {gText_Exit},
 };
 
+// HACKROM (Forest of Love): subsolo dos Centros Pokémon
+static const u8 sText_FolSimInfo[] = _("INFO");
+static const u8 sText_FolSmallDecor[] = _("DECOR & DOLLS");
+static const u8 sText_FolBigDolls[] = _("BIG DOLLS");
+static const u8 sText_FolVitamins[] = _("VITAMINS");
+static const u8 sText_FolHoldItems[] = _("HOLD ITEMS");
+
+static const struct MenuAction MultichoiceList_FolSimMode[] =
+{
+    {gText_SingleBattle},
+    {gText_DoubleBattle},
+    {sText_FolSimInfo},
+    {gText_Exit},
+};
+
+static const struct MenuAction MultichoiceList_FolDecorShop[] =
+{
+    {sText_FolSmallDecor},
+    {sText_FolBigDolls},
+    {gText_Exit},
+};
+
+static const struct MenuAction MultichoiceList_FolItemShop[] =
+{
+    {sText_FolVitamins},
+    {sText_FolHoldItems},
+    {gText_Exit},
+};
+
 static const struct MenuAction MultichoiceList_TagMatchType[] =
 {
     {gText_NormalTagMatch},
@@ -898,6 +927,9 @@ static const struct MultichoiceListStruct sMultichoiceLists[] =
     [MULTI_SLATEPORT_TENT_RULES]       = MULTICHOICE(MultichoiceList_SlateportTentRules),
     [MULTI_FALLARBOR_TENT_RULES]       = MULTICHOICE(MultichoiceList_FallarborTentRules),
     [MULTI_TAG_MATCH_TYPE]             = MULTICHOICE(MultichoiceList_TagMatchType),
+    [MULTI_FOL_SIM_MODE]               = MULTICHOICE(MultichoiceList_FolSimMode),
+    [MULTI_FOL_DECOR_SHOP]             = MULTICHOICE(MultichoiceList_FolDecorShop),
+    [MULTI_FOL_ITEM_SHOP]              = MULTICHOICE(MultichoiceList_FolItemShop),
 };
 
 const u8 *const gStdStrings[] =

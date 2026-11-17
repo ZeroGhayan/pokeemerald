@@ -574,3 +574,7 @@ gSpecials::
 	def_special Special_QuestAdvance
 	def_special Special_QuestComplete
 	def_special Special_QuestGetStep
+
+@ HACKROM (Forest of Love): subsolo dos Centros Pokémon (simulador)
+	def_special FolSimulator_SaveDynamicWarp
+	def_special FolSimulator_RestoreDynamicWarp
