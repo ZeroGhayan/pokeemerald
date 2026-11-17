@@ -739,6 +739,9 @@ static const struct SpriteTemplate sStatusSummaryBallsSpriteTemplates[2] =
 static const u8 sEmptyWhiteText_GrayHighlight[] = __("{COLOR WHITE}{HIGHLIGHT DARK_GRAY}              ");
 static const u8 sEmptyWhiteText_TransparentHighlight[] = __("{COLOR WHITE}{HIGHLIGHT TRANSPARENT}              ");
 
+// HACKROM (Forest of Love): a ordem segue as linhas de
+// graphics/battle_interface/status_icons_battle.png (um ícone 24x8 por linha,
+// com 8 px transparentes à direita para fechar o sprite 32x8).
 enum
 {
     PAL_STATUS_PSN,
@@ -746,15 +749,6 @@ enum
     PAL_STATUS_SLP,
     PAL_STATUS_FRZ,
     PAL_STATUS_BRN
-};
-
-static const u16 sStatusIconColors[] =
-{
-    [PAL_STATUS_PSN] = RGB(24, 12, 24),
-    [PAL_STATUS_PAR] = RGB(23, 23, 3),
-    [PAL_STATUS_SLP] = RGB(20, 20, 17),
-    [PAL_STATUS_FRZ] = RGB(17, 22, 28),
-    [PAL_STATUS_BRN] = RGB(28, 14, 10),
 };
 
 static const struct WindowTemplate sHealthboxWindowTemplate = {
@@ -868,7 +862,7 @@ static void UNUSED Debug_DrawNumberPair(s16 number1, s16 number2, u16 *dest)
 
 
 // HACKROM: Infatuation level icon in battle
-#define TAG_INFATUATION_BATTLE 0xD700
+// (tag em include/battle_interface.h: TAG_INFATUATION_BATTLE)
 
 static u8 sInfatuationBattleSpriteIds[MAX_BATTLERS_COUNT];
 
@@ -970,6 +964,137 @@ static void LoadInfatuationBattleGfx(void)
         LoadCompressedSpriteSheet(&sSpriteSheet_InfatuationBattle);
     if (IndexOfSpritePaletteTag(TAG_INFATUATION_BATTLE) == 0xFF)
         LoadCompressedSpritePalette(&sSpritePalette_InfatuationBattle);
+}
+
+// HACKROM (Forest of Love): ícone de status da batalha como SPRITE próprio.
+//
+// Na pret o ícone (PSN/PAR/SLP/FRZ/BRN) é copiado para dentro dos tiles do
+// healthbox e usa a paleta do healthbox (TAG_HEALTHBOX_PAL). Só UMA cor do
+// ícone muda por status (slot 12+battler, vinda de sStatusIconColors); o resto
+// usa cores fixas do healthbox. Os ícones novos do Pedro têm 3 cores próprias
+// cada (15 cores no total + transparente), o que não cabe nessa paleta: as
+// cores eram perdidas e todos os ícones saíam iguais.
+//
+// Solução: o healthbox continua desenhando só a área em branco no lugar do
+// ícone e um sprite 32x8 com a PALETA PRÓPRIA dos ícones
+// (graphics/battle_interface/status_icons_battle.png, 16 cores) é posto por
+// cima, na mesma posição em que a pret desenhava o ícone. Ele segue o healthbox
+// (entrada deslizando, "balanço" ao escolher a ação, some quando o healthbox
+// some). Custa 1 paleta de OBJ na batalha (compartilhada pelos 4 battlers).
+// (tag em include/battle_interface.h: TAG_STATUS_ICON_BATTLE)
+#define STATUS_ICON_W 32
+#define STATUS_ICON_H 8
+
+static u8 sStatusIconBattleSpriteIds[MAX_BATTLERS_COUNT];
+
+static const union AnimCmd sAnim_StatusIconBattlePsn[] = { ANIMCMD_FRAME(0, 0), ANIMCMD_END };
+static const union AnimCmd sAnim_StatusIconBattlePar[] = { ANIMCMD_FRAME(4, 0), ANIMCMD_END };
+static const union AnimCmd sAnim_StatusIconBattleSlp[] = { ANIMCMD_FRAME(8, 0), ANIMCMD_END };
+static const union AnimCmd sAnim_StatusIconBattleFrz[] = { ANIMCMD_FRAME(12, 0), ANIMCMD_END };
+static const union AnimCmd sAnim_StatusIconBattleBrn[] = { ANIMCMD_FRAME(16, 0), ANIMCMD_END };
+static const union AnimCmd *const sAnims_StatusIconBattle[] =
+{
+    [PAL_STATUS_PSN] = sAnim_StatusIconBattlePsn,
+    [PAL_STATUS_PAR] = sAnim_StatusIconBattlePar,
+    [PAL_STATUS_SLP] = sAnim_StatusIconBattleSlp,
+    [PAL_STATUS_FRZ] = sAnim_StatusIconBattleFrz,
+    [PAL_STATUS_BRN] = sAnim_StatusIconBattleBrn,
+};
+
+static const struct CompressedSpriteSheet sSpriteSheet_StatusIconBattle =
+{
+    gStatusIconsBattle_Gfx, 5 * STATUS_ICON_W * STATUS_ICON_H / 2, TAG_STATUS_ICON_BATTLE
+};
+static const struct CompressedSpritePalette sSpritePalette_StatusIconBattle =
+{
+    gStatusIconsBattle_Pal, TAG_STATUS_ICON_BATTLE
+};
+static const struct SpriteTemplate sSpriteTemplate_StatusIconBattle =
+{
+    .tileTag = TAG_STATUS_ICON_BATTLE,
+    .paletteTag = TAG_STATUS_ICON_BATTLE,
+    .oam = &sOamData_InfatuationBattle, // mesmo formato: 32x8, 4bpp, prioridade 1
+    .anims = sAnims_StatusIconBattle,
+    .images = NULL,
+    .affineAnims = gDummySpriteAffineAnimTable,
+    .callback = SpriteCallbackDummy,
+};
+
+// Posição do ícone em relação ao ponto de referência (32,16) do sprite
+// esquerdo do healthbox; é exatamente onde a pret copiava os 3 tiles do ícone
+// (ver tileNumAdder em UpdateStatusIconInHealthbox):
+// - jogador, simples: tile 0x1A -> x16 y24
+// - oponente:         tile 0x11 -> x8  y16
+// - jogador, duplas:  tile 0x12 -> x16 y16
+static const s8 sStatusIconOffsets[3][2] =
+{
+    [0] = { 16 + STATUS_ICON_W / 2 - 32, 24 + STATUS_ICON_H / 2 - 16 }, // jogador, simples
+    [1] = {  8 + STATUS_ICON_W / 2 - 32, 16 + STATUS_ICON_H / 2 - 16 }, // oponente
+    [2] = { 16 + STATUS_ICON_W / 2 - 32, 16 + STATUS_ICON_H / 2 - 16 }, // jogador, duplas
+};
+
+static void CreateStatusIconBattleSprite(u8 battler, u8 healthboxSpriteId)
+{
+    u8 spriteId, layout;
+
+    if (battler >= MAX_BATTLERS_COUNT)
+        return;
+    if (battler == 0)
+    {
+        u8 i;
+        for (i = 0; i < MAX_BATTLERS_COUNT; i++)
+            sStatusIconBattleSpriteIds[i] = SPRITE_NONE;
+    }
+    // Checagem pelo tag: a pret apaga sheets/paletas entre batalhas.
+    if (GetSpriteTileStartByTag(TAG_STATUS_ICON_BATTLE) == 0xFFFF)
+        LoadCompressedSpriteSheet(&sSpriteSheet_StatusIconBattle);
+    if (IndexOfSpritePaletteTag(TAG_STATUS_ICON_BATTLE) == 0xFF)
+        LoadCompressedSpritePalette(&sSpritePalette_StatusIconBattle);
+
+    if (GetBattlerSide(battler) != B_SIDE_PLAYER)
+        layout = 1;
+    else if (IsDoubleBattle())
+        layout = 2;
+    else
+        layout = 0;
+
+    spriteId = CreateSprite(&sSpriteTemplate_StatusIconBattle, 0, 0, 0);
+    if (spriteId == MAX_SPRITES)
+        return;
+    sStatusIconBattleSpriteIds[battler] = spriteId;
+    // Mesmo callback do ícone de Infatuation: segue o healthbox e esconde
+    // quando data[4] == TRUE (sem status) ou quando o healthbox está oculto.
+    gSprites[spriteId].callback = SpriteCB_InfatuationBattleIcon;
+    gSprites[spriteId].data[0] = healthboxSpriteId;
+    gSprites[spriteId].data[1] = battler;
+    gSprites[spriteId].data[2] = sStatusIconOffsets[layout][0];
+    gSprites[spriteId].data[3] = sStatusIconOffsets[layout][1];
+    gSprites[spriteId].data[4] = TRUE; // começa sem status
+    gSprites[spriteId].invisible = TRUE;
+    gSprites[spriteId].oam.priority = 1;
+    gSprites[spriteId].callback(&gSprites[spriteId]);
+}
+
+// statusId = PAL_STATUS_* ou 0xFF para esconder.
+static void SetStatusIconBattleSprite(u8 battler, u8 statusId)
+{
+    u8 spriteId;
+
+    if (battler >= MAX_BATTLERS_COUNT)
+        return;
+    spriteId = sStatusIconBattleSpriteIds[battler];
+    if (spriteId == SPRITE_NONE || spriteId >= MAX_SPRITES || !gSprites[spriteId].inUse)
+        return;
+    if (statusId == 0xFF)
+    {
+        gSprites[spriteId].data[4] = TRUE;
+    }
+    else
+    {
+        StartSpriteAnim(&gSprites[spriteId], statusId);
+        gSprites[spriteId].data[4] = FALSE;
+    }
+    gSprites[spriteId].callback(&gSprites[spriteId]);
 }
 
 static void CreateInfatuationBattleIcon(u8 battler, u8 healthboxSpriteId)
@@ -1118,6 +1243,8 @@ u8 CreateBattlerHealthboxSprites(u8 battler)
 
     // HACKROM: create infatuation icon sprite for this battler
     CreateInfatuationBattleIcon(battler, healthboxLeftSpriteId);
+    // HACKROM (Forest of Love): ícone de status com paleta própria
+    CreateStatusIconBattleSprite(battler, healthboxLeftSpriteId);
 
     return healthboxLeftSpriteId;
 }
@@ -2166,7 +2293,7 @@ static void UpdateStatusIconInHealthbox(u8 healthboxSpriteId)
 {
     s32 i;
     u8 battler, healthBarSpriteId;
-    u32 status, pltAdder;
+    u32 status;
     const u8 *statusGfxPtr;
     s16 tileNumAdder;
     u8 statusPalId;
@@ -2225,15 +2352,17 @@ static void UpdateStatusIconInHealthbox(u8 healthboxSpriteId)
             CpuCopy32(GetHealthboxElementGfxPtr(HEALTHBOX_GFX_1), (void *)(OBJ_VRAM0 + gSprites[healthBarSpriteId].oam.tileNum * TILE_SIZE_4BPP), 64);
 
         TryAddPokeballIconToHealthbox(healthboxSpriteId, TRUE);
+        SetStatusIconBattleSprite(battler, 0xFF); // HACKROM (Forest of Love)
         return;
     }
 
-    pltAdder = PLTT_ID(gSprites[healthboxSpriteId].oam.paletteNum);
-    pltAdder += battler + 12;
-
-    FillPalette(sStatusIconColors[statusPalId], OBJ_PLTT_OFFSET + pltAdder, PLTT_SIZEOF(1));
-    CpuCopy16(&gPlttBufferUnfaded[OBJ_PLTT_OFFSET + pltAdder], (u16 *)OBJ_PLTT + pltAdder, PLTT_SIZEOF(1));
-    CpuCopy32(statusGfxPtr, (void *)(OBJ_VRAM0 + (gSprites[healthboxSpriteId].oam.tileNum + tileNumAdder) * TILE_SIZE_4BPP), 96);
+    // HACKROM (Forest of Love): o ícone agora é um sprite com paleta própria
+    // (ver CreateStatusIconBattleSprite). Nos tiles do healthbox fica só o
+    // fundo em branco; a pret pintava aqui o ícone + 1 cor (slot 12+battler).
+    statusGfxPtr = GetHealthboxElementGfxPtr(HEALTHBOX_GFX_39);
+    for (i = 0; i < 3; i++)
+        CpuCopy32(statusGfxPtr, (void *)(OBJ_VRAM0 + (gSprites[healthboxSpriteId].oam.tileNum + tileNumAdder + i) * TILE_SIZE_4BPP), 32);
+    SetStatusIconBattleSprite(battler, statusPalId);
     if (IsDoubleBattle() == TRUE || GetBattlerSide(battler) == B_SIDE_OPPONENT)
     {
         if (!gBattleSpritesDataPtr->battlerData[battler].hpNumbersNoBars)

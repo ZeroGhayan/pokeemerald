@@ -44,6 +44,12 @@ enum
 
 #define TAG_STATUS_SUMMARY_BALLS_TILE   0xD714
 
+// HACKROM (Forest of Love): sprites extras presos ao healthbox. Precisam de
+// tags livres: o ícone de Infatuation usava 0xD700, que é o mesmo tag do
+// healthbox do jogador 2 (duplas) e fazia um dos dois usar os tiles do outro.
+#define TAG_INFATUATION_BATTLE          0xD720
+#define TAG_STATUS_ICON_BATTLE          0xD721
+
 #define TAG_HEALTHBAR_PAL               TAG_HEALTHBAR_PLAYER1_TILE
 #define TAG_HEALTHBOX_PAL               TAG_HEALTHBOX_PLAYER1_TILE
 
