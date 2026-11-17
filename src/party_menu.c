@@ -4194,11 +4194,43 @@ static void LoadPartyMenuPokeballGfx(void)
     LoadCompressedSpritePalette(&sSpritePalette_MenuPokeball);
 }
 
+// HACKROM (Forest of Love): posição horizontal (centro do sprite 32x8) dos
+// ícones de status e de Infatuation na caixa do menu POKÉMON.
+// - Caixas pequenas (coluna da direita): status no lugar do "Lv" e
+//   Infatuation 32 px depois, no lugar do gênero (como antes).
+// - Caixa GRANDE (coluna da esquerda: slot 1, e slots 1-2 no menu de batalha
+//   em duplas/multi): ela só tem ~44 px úteis na linha do "Lv" (x39-82). Com
+//   +32 o Infatuation saía da caixa (x71-92, por cima da borda laranja em
+//   x84). Agora o status recua 1 px (arte em x39-58) e o Infatuation fica
+//   22 px depois (arte em x60-81, nível 3 incluso), dentro da caixa.
+#define PARTY_BIG_BOX_STATUS_NUDGE   1
+#define PARTY_BIG_BOX_INFAT_OFFSET  22
+#define PARTY_SMALL_BOX_INFAT_OFFSET 32
+
+static bool8 IsPartyMenuBigBox(struct PartyMenuBox *menuBox)
+{
+    return menuBox->spriteCoords[4] < DISPLAY_WIDTH / 2; // caixas grandes têm x=50; pequenas, x=136
+}
+
+static s16 GetPartyMonStatusIconX(struct PartyMenuBox *menuBox)
+{
+    if (IsPartyMenuBigBox(menuBox))
+        return menuBox->spriteCoords[4] - PARTY_BIG_BOX_STATUS_NUDGE;
+    return menuBox->spriteCoords[4];
+}
+
+static s16 GetPartyMonInfatuationIconX(struct PartyMenuBox *menuBox)
+{
+    if (IsPartyMenuBigBox(menuBox))
+        return GetPartyMonStatusIconX(menuBox) + PARTY_BIG_BOX_INFAT_OFFSET;
+    return GetPartyMonStatusIconX(menuBox) + PARTY_SMALL_BOX_INFAT_OFFSET;
+}
+
 // HACKROM: ícone de Infatuation (níveis 1-3) colado à direita do ícone de
 // status, criado e guardado na própria PartyMenuBox, como o statusSpriteId.
 static void CreatePartyMonInfatuationSprite(struct PartyMenuBox *menuBox)
 {
-    menuBox->infatuationSpriteId = CreateSprite(&sSpriteTemplate_InfatuationIcons, menuBox->spriteCoords[4] + 32, menuBox->spriteCoords[5], 0);
+    menuBox->infatuationSpriteId = CreateSprite(&sSpriteTemplate_InfatuationIcons, GetPartyMonInfatuationIconX(menuBox), menuBox->spriteCoords[5], 0);
     if (menuBox->infatuationSpriteId == MAX_SPRITES)
     {
         menuBox->infatuationSpriteId = SPRITE_NONE;
@@ -4229,7 +4261,7 @@ static void CreatePartyMonStatusSprite(struct Pokemon *mon, struct PartyMenuBox 
 {
     if (GetMonData(mon, MON_DATA_SPECIES) != SPECIES_NONE)
     {
-        menuBox->statusSpriteId = CreateSprite(&sSpriteTemplate_StatusIcons, menuBox->spriteCoords[4], menuBox->spriteCoords[5], 0);
+        menuBox->statusSpriteId = CreateSprite(&sSpriteTemplate_StatusIcons, GetPartyMonStatusIconX(menuBox), menuBox->spriteCoords[5], 0);
         CreatePartyMonInfatuationSprite(menuBox);
         SetPartyMonAilmentGfx(mon, menuBox);
     }
@@ -4239,7 +4271,7 @@ static void CreatePartyMonStatusSpriteParameterized(u16 species, u8 status, stru
 {
     if (species != SPECIES_NONE)
     {
-        menuBox->statusSpriteId = CreateSprite(&sSpriteTemplate_StatusIcons, menuBox->spriteCoords[4], menuBox->spriteCoords[5], 0);
+        menuBox->statusSpriteId = CreateSprite(&sSpriteTemplate_StatusIcons, GetPartyMonStatusIconX(menuBox), menuBox->spriteCoords[5], 0);
         // Caixas parametrizadas (parceiro da batalha multi) não têm o nível
         // salvo: o ícone é criado escondido.
         CreatePartyMonInfatuationSprite(menuBox);

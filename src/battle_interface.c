@@ -507,11 +507,15 @@ static const struct Subsprite sHealthBar_Subsprites_Opponent[] =
         .priority = 1
     },
     {
-        // HACKROM (Forest of Love): a barra andou FOL_HEALTHBOX_WIDEN px para a
-        // direita; a bolinha de "já capturado" fica onde estava na moldura
-        // (início da área dos ícones). Ela só aparece sem status.
-        .x = -32 - FOL_HEALTHBOX_WIDEN,
-        .y = 0,
+        // HACKROM (Forest of Love): bolinha de "já capturado" na LINHA DO NOME,
+        // no vão livre entre o nome e o "Lv" que a moldura alargada abriu.
+        // Origem deste sprite = x64,y16 do PNG do healthbox do oponente, então
+        // a bolinha (8x8) fica em x72-79, y7-14. A janela do nome+gênero vai
+        // até x63 (7 tiles) e o "Lv" começa em x88 (Lv100) / x93 (Lv10-99):
+        // nunca encosta em nome, gênero, "Lv", status ou Infatuation (que
+        // ficam na linha da barra, x4-46). Igual em simples e duplas.
+        .x = 8,
+        .y = -9,
         .shape = SPRITE_SHAPE(8x8),
         .size = SPRITE_SIZE(8x8),
         .tileOffset = 8,
@@ -2292,10 +2296,11 @@ static void TryAddPokeballIconToHealthbox(u8 healthboxSpriteId, bool8 noStatus)
 
     healthBarSpriteId = gSprites[healthboxSpriteId].hMain_HealthBarSpriteId;
 
-    if (noStatus)
-        CpuCopy32(GetHealthboxElementGfxPtr(HEALTHBOX_GFX_STATUS_BALL_CAUGHT), (void *)(OBJ_VRAM0 + (gSprites[healthBarSpriteId].oam.tileNum + 8) * TILE_SIZE_4BPP), 32);
-    else
-        CpuFill32(0, (void *)(OBJ_VRAM0 + (gSprites[healthBarSpriteId].oam.tileNum + 8) * TILE_SIZE_4BPP), 32);
+    // HACKROM (Forest of Love): a bolinha tem lugar próprio (linha do nome),
+    // então aparece sempre que a espécie já foi capturada, com ou sem status.
+    // Na pret ela dividia o lugar do ícone de status e era apagada com status.
+    (void)noStatus;
+    CpuCopy32(GetHealthboxElementGfxPtr(HEALTHBOX_GFX_STATUS_BALL_CAUGHT), (void *)(OBJ_VRAM0 + (gSprites[healthBarSpriteId].oam.tileNum + 8) * TILE_SIZE_4BPP), 32);
 }
 
 static void UpdateStatusIconInHealthbox(u8 healthboxSpriteId)
