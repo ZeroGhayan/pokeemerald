@@ -4056,6 +4056,8 @@ extern const u32 gInfatuationGfx_Icons[];
 extern const u32 gInfatuationPal_Icons[];
 extern const u32 gInfatuationGfx_Battle[];
 extern const u32 gInfatuationPal_Battle[];
+extern const u32 gStatusIconsBattle_Gfx[];
+extern const u32 gStatusIconsBattle_Pal[];
 extern const u32 gStatusPal_Icons[];
 
 extern const u32 gShopMenu_Gfx[];

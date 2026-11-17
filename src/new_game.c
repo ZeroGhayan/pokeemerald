@@ -1,4 +1,5 @@
 #include "global.h"
+#include "fol_houses.h"
 #include "new_game.h"
 #include "random.h"
 #include "pokemon.h"
@@ -168,6 +169,7 @@ void NewGameInitData(void)
     ClearTVShowData();
     ResetGabbyAndTy();
     ClearSecretBases();
+    FolHouses_NewGameInit(); // HACKROM (Forest of Love): casas de viagem
     ClearBerryTrees();
     SetMoney(&gSaveBlock1Ptr->money, 3000);
     SetCoins(0);

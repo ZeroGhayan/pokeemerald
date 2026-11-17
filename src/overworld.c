@@ -1,4 +1,5 @@
 #include "global.h"
+#include "fol_houses.h"
 #include "overworld.h"
 #include "battle_pyramid.h"
 #include "battle_setup.h"
@@ -539,6 +540,9 @@ const struct MapLayout *GetMapLayout(void)
 
 void ApplyCurrentWarp(void)
 {
+    // HACKROM (Forest of Love): depois da intro, o quarto do jogador é a casa
+    // de viagem compartilhada (MAP_FOL_HOUSE).
+    FolHouses_TryRedirectBedroomWarp(&sWarpDestination);
     gLastUsedWarp = gSaveBlock1Ptr->location;
     gSaveBlock1Ptr->location = sWarpDestination;
     sFixedDiveWarp = sDummyWarpData;

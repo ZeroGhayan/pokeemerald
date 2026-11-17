@@ -492,7 +492,8 @@
     "BattlePyramidSquare14",
     "BattlePyramidSquare15",
     "BattlePyramidSquare16",
-    "UnionRoom"
+    "UnionRoom",
+    "FolHouse"
   ],
   "gMapGroup_SpecialArea": [
     "SafariZone_Northwest",
@@ -583,7 +584,8 @@
     "NavelRock_Down10",
     "NavelRock_Down11",
     "NavelRock_Bottom",
-    "TrainerHill_Elevator"
+    "TrainerHill_Elevator",
+    "PokemonCenter_B1F"
   ],
   "gMapGroup_IndoorRoute104Prototype": [
     "Route104_Prototype",

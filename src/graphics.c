@@ -1123,6 +1123,10 @@ const u32 gInfatuationGfx_Icons[] = INCGFX_U32("graphics/interface/infatuation_i
 const u32 gInfatuationPal_Icons[] = INCGFX_U32("graphics/interface/infatuation_icons.png", ".gbapal.lz");
 const u32 gInfatuationGfx_Battle[] = INCGFX_U32("graphics/battle_interface/infatuation.png", ".4bpp.lz");
 const u32 gInfatuationPal_Battle[] = INCGFX_U32("graphics/battle_interface/infatuation.png", ".gbapal.lz");
+// HACKROM (Forest of Love): ícones de status da batalha (PSN/PAR/SLP/FRZ/BRN)
+// com paleta própria de 16 cores, desenhados como sprite sobre o healthbox.
+const u32 gStatusIconsBattle_Gfx[] = INCGFX_U32("graphics/battle_interface/status_icons_battle.png", ".4bpp.lz");
+const u32 gStatusIconsBattle_Pal[] = INCGFX_U32("graphics/battle_interface/status_icons_battle.png", ".gbapal.lz");
 
 const u32 gMoveTypes_Gfx[] = INCGFX_U32("graphics/types/move_types.4bpp", ".lz");
 const u32 gMoveTypes_Pal[] = INCGFX_U32("graphics/types/move_types.gbapal", ".lz");

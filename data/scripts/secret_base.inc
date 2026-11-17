@@ -26,6 +26,12 @@ SecretBase_Text_DiscoveredSmallEntrance:
 
 SecretBase_EventScript_CheckEntrance::
 	special GetSecretBaseTypeInFrontOfPlayer
+	@ HACKROM (Forest of Love): criação de Secret Bases desativada (as casas
+	@ de viagem rápida usam esse sistema). A entrada só mostra a descrição.
+	lockall
+	goto_if_eq VAR_0x8007, SECRET_BASE_TREE, SecretBase_EventScript_TreeNoSecretPower
+	goto_if_eq VAR_0x8007, SECRET_BASE_SHRUB, SecretBase_EventScript_ShrubNoSecretPower
+	goto SecretBase_EventScript_CaveNoSecretPower
 	special CheckPlayerHasSecretBase
 	goto_if_eq VAR_RESULT, TRUE, SecretBase_EventScript_AlreadyHasSecretBase
 	checkpartymove MOVE_SECRET_POWER

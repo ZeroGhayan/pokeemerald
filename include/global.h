@@ -572,6 +572,24 @@ struct SecretBase
     /*0x1AD0*/ struct SecretBaseParty party;
 };
 
+// HACKROM (Forest of Love): casas de viagem rápida.
+// secretBases[0] continua sendo a base do jogador e guarda as decorações
+// MÓVEIS compartilhadas por todas as casas (código vanilla de decoração).
+// secretBases[1..SECRET_BASES_COUNT-1] (bases de outros jogadores, recebidas
+// por record mixing) foram desativados e o espaço é reaproveitado por esta
+// estrutura. O primeiro byte fica sempre 0 para coincidir com secretBaseId=0
+// ("base vazia"), assim nenhum código vanilla que ainda leia o array vê uma
+// base ocupada. Ver gFolHouseSave em include/fol_houses.h.
+struct FolHouseSave
+{
+    u8 alwaysZero;      // 0x00: sobrepõe secretBases[1].secretBaseId
+    u8 version;         // 0x01
+    u8 vanillaName[PLAYER_NAME_LENGTH]; // 0x02: ClearSecretBase enche de EOS; não usar
+    u8 unused[3];       // 0x09
+    u32 ownedHouses;    // 0x0C: bit N = casa FOL_HOUSE_N comprada
+    u8 reserved[40];    // 0x10: espaço para nomes de casas / extras futuros
+};
+
 #include "constants/game_stat.h"
 #include "global.fieldmap.h"
 #include "global.berry.h"
@@ -1026,8 +1044,12 @@ struct SaveBlock1
     /*0x159C*/ u32 gameStats[NUM_GAME_STATS];
     /*0x169C*/ struct BerryTree berryTrees[BERRY_TREES_COUNT];
     /*0x1A9C*/ struct SecretBase secretBases[SECRET_BASES_COUNT];
-    /*0x271C*/ u8 playerRoomDecorations[DECOR_MAX_PLAYERS_HOUSE];
-    /*0x2728*/ u8 playerRoomDecorationPositions[DECOR_MAX_PLAYERS_HOUSE];
+    // HACKROM (Forest of Love): os antigos playerRoomDecorations/Positions foram
+    // reaproveitados pelas casas de viagem (o quarto virou a base compartilhada).
+    // folFixedDecor[FOL_FIXED_*] = opção escolhida de cada decoração fixa.
+    // folHouseMisc[FOL_HOUSE_MISC_*] = rádio, casa atual etc. (ver fol_houses.h)
+    /*0x271C*/ u8 folFixedDecor[DECOR_MAX_PLAYERS_HOUSE];
+    /*0x2728*/ u8 folHouseMisc[DECOR_MAX_PLAYERS_HOUSE];
     /*0x2734*/ u8 decorationDesks[10];
     /*0x273E*/ u8 decorationChairs[10];
     /*0x2748*/ u8 decorationPlants[10];

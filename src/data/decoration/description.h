@@ -571,3 +571,22 @@ const u8 DecorDesc_REGISTEEL_DOLL[] = _(
     "A large doll.\n"
         "Place it on a mat\n"
         "or a desk.");
+
+// HACKROM (Forest of Love): decorações novas (placeholder)
+const u8 DecorDesc_FOL_DOLL[] = _(
+    "A new FOREST OF\n"
+        "LOVE doll. Place it\n"
+        "on a mat or desk.");
+
+const u8 DecorDesc_FOL_ORNAMENT[] = _(
+    "A new FOREST OF\n"
+        "LOVE ornament.");
+
+const u8 DecorDesc_FOL_PLANT[] = _(
+    "A new FOREST OF\n"
+        "LOVE potted plant.");
+
+const u8 DecorDesc_FOL_CUSHION[] = _(
+    "A new FOREST OF\n"
+        "LOVE cushion. Place\n"
+        "it on a mat or desk.");
