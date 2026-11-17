@@ -507,7 +507,10 @@ static const struct Subsprite sHealthBar_Subsprites_Opponent[] =
         .priority = 1
     },
     {
-        .x = -32,
+        // HACKROM (Forest of Love): a barra andou FOL_HEALTHBOX_WIDEN px para a
+        // direita; a bolinha de "já capturado" fica onde estava na moldura
+        // (início da área dos ícones). Ela só aparece sem status.
+        .x = -32 - FOL_HEALTHBOX_WIDEN,
         .y = 0,
         .shape = SPRITE_SHAPE(8x8),
         .size = SPRITE_SIZE(8x8),
@@ -912,27 +915,27 @@ static const struct SpriteTemplate sSpriteTemplate_InfatuationBattle =
     .callback = SpriteCallbackDummy,
 };
 
-// HACKROM (Forest of Love): posição do ícone de Infatuation em relação ao
-// CENTRO do sprite esquerdo do healthbox (o mesmo sprite onde o jogo desenha
-// o ícone de status BRN/PSN/SLP/PAR/FRZ). O ícone tem 32x8 (arte de até 22 px).
-// Cálculo (coordenadas do PNG do healthbox, que é o layout real):
-// - Jogador, simples: status em x16-39 / y24-31 (tile 0x1A). O sprite é
-//   criado como 64x32 e só depois vira 64x64, então a referência (x,y) do
-//   sprite continua sendo o ponto 32,16. O ícone fica colado à direita do
-//   status: x40, y24.
-// - Oponente (simples/duplas): status em x8-31 / y16-23 (tile 0x11 do sprite
-//   64x32, centro 32,16), na linha da barra de HP. À direita está a barra,
-//   então o ícone fica logo ABAIXO do status, na moldura inferior: x8, y24.
-// - Jogador, duplas: status em x16-39 / y16-23 (tile 0x12). Mesmo caso do
-//   oponente: logo abaixo do status, x16, y24.
-// Para mudar a posição, altere só esta tabela (xOff, yOff).
+// HACKROM (Forest of Love): posição dos ícones de Infatuation e de status em
+// relação ao CENTRO (32,16) do sprite esquerdo do healthbox. Coordenadas do
+// PNG do healthbox (canto superior esquerdo do ícone; arte de 20x8, ou 22x8
+// no Infatuation nível 3):
+// - Jogador, simples (layout que o Pedro aprovou, quase igual ao anterior):
+//   linha dos números de HP (y24). Status x15-34, Infatuation x37-58. Os
+//   números de HP começam em x60, então o nível 3 não encosta mais no dígito.
+// - Oponente (simples/duplas): linha da barra (y16), na faixa x4-47 aberta
+//   pela moldura alargada; o rótulo "HP" começa em x48. Status x4-23,
+//   Infatuation x25-46.
+// - Jogador, duplas: linha da barra (y16), faixa x12-55 (rótulo "HP" em x56).
+//   Status x12-31, Infatuation x33-54.
+// Para mudar a posição, altere só estas tabelas.
 #define INFAT_ICON_W 32
 #define INFAT_ICON_H 8
+#define FOL_ICON_OFFSET(x, y, w, h) { (x) + (w) / 2 - 32, (y) + (h) / 2 - 16 }
 static const s8 sInfatuationIconOffsets[3][2] =
 {
-    [0] = { 40 + INFAT_ICON_W / 2 - 32, 24 + INFAT_ICON_H / 2 - 16 }, // jogador, simples
-    [1] = {  8 + INFAT_ICON_W / 2 - 32, 24 + INFAT_ICON_H / 2 - 16 }, // oponente
-    [2] = { 16 + INFAT_ICON_W / 2 - 32, 24 + INFAT_ICON_H / 2 - 16 }, // jogador, duplas
+    [0] = FOL_ICON_OFFSET(37, 24, INFAT_ICON_W, INFAT_ICON_H), // jogador, simples
+    [1] = FOL_ICON_OFFSET(25, 16, INFAT_ICON_W, INFAT_ICON_H), // oponente
+    [2] = FOL_ICON_OFFSET(33, 16, INFAT_ICON_W, INFAT_ICON_H), // jogador, duplas
 };
 
 static void SpriteCB_InfatuationBattleIcon(struct Sprite *sprite)
@@ -951,6 +954,12 @@ static void SpriteCB_InfatuationBattleIcon(struct Sprite *sprite)
     sprite->y = gSprites[healthboxSpriteId].y + sprite->data[3];
     sprite->x2 = gSprites[healthboxSpriteId].x2;
     sprite->y2 = gSprites[healthboxSpriteId].y2;
+    // HACKROM (Forest of Love): durante as animações de golpe/status a pret
+    // muda a prioridade dos healthboxes (UpdateOamPriorityInAllHealthboxes(0)
+    // no início, 1 no fim). Com prioridade fixa 1 o ícone ficava ATRÁS do
+    // healthbox (prioridade 0) e sumia durante a animação. Agora o ícone copia
+    // a prioridade do healthbox a cada quadro.
+    sprite->oam.priority = gSprites[healthboxSpriteId].oam.priority;
     // data[4] = TRUE -> nível 0 (sem Infatuation)
     sprite->invisible = (sprite->data[4] || gSprites[healthboxSpriteId].invisible);
 }
@@ -1020,17 +1029,13 @@ static const struct SpriteTemplate sSpriteTemplate_StatusIconBattle =
     .callback = SpriteCallbackDummy,
 };
 
-// Posição do ícone em relação ao ponto de referência (32,16) do sprite
-// esquerdo do healthbox; é exatamente onde a pret copiava os 3 tiles do ícone
-// (ver tileNumAdder em UpdateStatusIconInHealthbox):
-// - jogador, simples: tile 0x1A -> x16 y24
-// - oponente:         tile 0x11 -> x8  y16
-// - jogador, duplas:  tile 0x12 -> x16 y16
+// Posição do ícone de status: ver o comentário de sInfatuationIconOffsets
+// (as duas tabelas são pensadas juntas, ícones lado a lado).
 static const s8 sStatusIconOffsets[3][2] =
 {
-    [0] = { 16 + STATUS_ICON_W / 2 - 32, 24 + STATUS_ICON_H / 2 - 16 }, // jogador, simples
-    [1] = {  8 + STATUS_ICON_W / 2 - 32, 16 + STATUS_ICON_H / 2 - 16 }, // oponente
-    [2] = { 16 + STATUS_ICON_W / 2 - 32, 16 + STATUS_ICON_H / 2 - 16 }, // jogador, duplas
+    [0] = FOL_ICON_OFFSET(15, 24, STATUS_ICON_W, STATUS_ICON_H), // jogador, simples
+    [1] = FOL_ICON_OFFSET( 4, 16, STATUS_ICON_W, STATUS_ICON_H), // oponente
+    [2] = FOL_ICON_OFFSET(12, 16, STATUS_ICON_W, STATUS_ICON_H), // jogador, duplas
 };
 
 static void CreateStatusIconBattleSprite(u8 battler, u8 healthboxSpriteId)
@@ -1286,12 +1291,16 @@ static void SpriteCB_HealthBar(struct Sprite *sprite)
         sprite->y = gSprites[healthboxSpriteId].y;
         break;
     case 1:
-        sprite->x = gSprites[healthboxSpriteId].x + 16;
+        // HACKROM (Forest of Love): jogador em duplas. Moldura 24 px mais larga
+        // (FOL_HEALTHBOX_WIDEN); a barra anda junto para abrir espaço aos
+        // ícones de status/Infatuation à esquerda do rótulo "HP".
+        sprite->x = gSprites[healthboxSpriteId].x + 16 + FOL_HEALTHBOX_WIDEN;
         sprite->y = gSprites[healthboxSpriteId].y;
         break;
     case 2:
     default:
-        sprite->x = gSprites[healthboxSpriteId].x + 8;
+        // HACKROM (Forest of Love): oponente (simples e duplas), idem.
+        sprite->x = gSprites[healthboxSpriteId].x + 8 + FOL_HEALTHBOX_WIDEN;
         sprite->y = gSprites[healthboxSpriteId].y;
         break;
     }
@@ -1384,10 +1393,10 @@ void InitBattlerHealthboxCoords(u8 battler)
         switch (GetBattlerPosition(battler))
         {
         case B_POSITION_PLAYER_LEFT:
-            x = 159, y = 76;
+            x = 159 - FOL_HEALTHBOX_WIDEN, y = 76; // HACKROM: moldura mais larga, mesma borda direita
             break;
         case B_POSITION_PLAYER_RIGHT:
-            x = 171, y = 101;
+            x = 171 - FOL_HEALTHBOX_WIDEN, y = 101; // HACKROM: idem
             break;
         case B_POSITION_OPPONENT_LEFT:
             x = 44, y = 19;
@@ -1424,12 +1433,12 @@ static void UpdateLvlInHealthbox(u8 healthboxSpriteId, u8 lvl)
         if (!IsDoubleBattle())
             objVram += spriteTileNum + 0x820;
         else
-            objVram += spriteTileNum + 0x420;
+            objVram += spriteTileNum + 0x420 + FOL_HEALTHBOX_WIDEN_BYTES; // HACKROM: Lv 3 tiles à direita
     }
     else
     {
         objVram = (void *)(OBJ_VRAM0);
-        objVram += spriteTileNum + 0x400;
+        objVram += spriteTileNum + 0x400 + FOL_HEALTHBOX_WIDEN_BYTES; // HACKROM: Lv 3 tiles à direita
     }
     TextIntoHealthboxObject(objVram, windowTileData, 3);
     RemoveWindowOnHealthbox(windowId);
@@ -1533,7 +1542,7 @@ static void UpdateHpTextInHealthboxInDoubles(u8 healthboxSpriteId, s16 value, u8
                 HpTextIntoHealthboxObject((void *)(OBJ_VRAM0) + spriteTileNum + 0xC0, windowTileData, 2);
                 RemoveWindowOnHealthbox(windowId);
                 CpuCopy32(GetHealthboxElementGfxPtr(HEALTHBOX_GFX_FRAME_END),
-                          (void *)(OBJ_VRAM0 + 0x680) + (gSprites[healthboxSpriteId].oam.tileNum * TILE_SIZE_4BPP),
+                          (void *)(OBJ_VRAM0 + 0x680 + FOL_HEALTHBOX_WIDEN_BYTES) + (gSprites[healthboxSpriteId].oam.tileNum * TILE_SIZE_4BPP),
                            0x20);
             }
             else
@@ -1706,7 +1715,7 @@ void SwapHpBarsWithHpText(void)
                 {
                     UpdateStatusIconInHealthbox(gHealthboxSpriteIds[i]);
                     UpdateHealthboxAttribute(gHealthboxSpriteIds[i], &gPlayerParty[gBattlerPartyIndexes[i]], HEALTHBOX_HEALTH_BAR);
-                    CpuCopy32(GetHealthboxElementGfxPtr(HEALTHBOX_GFX_FRAME_END_BAR), (void *)(OBJ_VRAM0 + 0x680 + gSprites[gHealthboxSpriteIds[i]].oam.tileNum * TILE_SIZE_4BPP), 32);
+                    CpuCopy32(GetHealthboxElementGfxPtr(HEALTHBOX_GFX_FRAME_END_BAR), (void *)(OBJ_VRAM0 + 0x680 + FOL_HEALTHBOX_WIDEN_BYTES + gSprites[gHealthboxSpriteIds[i]].oam.tileNum * TILE_SIZE_4BPP), 32);
                 }
             }
             else
@@ -2363,14 +2372,13 @@ static void UpdateStatusIconInHealthbox(u8 healthboxSpriteId)
     for (i = 0; i < 3; i++)
         CpuCopy32(statusGfxPtr, (void *)(OBJ_VRAM0 + (gSprites[healthboxSpriteId].oam.tileNum + tileNumAdder + i) * TILE_SIZE_4BPP), 32);
     SetStatusIconBattleSprite(battler, statusPalId);
-    if (IsDoubleBattle() == TRUE || GetBattlerSide(battler) == B_SIDE_OPPONENT)
-    {
-        if (!gBattleSpritesDataPtr->battlerData[battler].hpNumbersNoBars)
-        {
-            CpuCopy32(GetHealthboxElementGfxPtr(HEALTHBOX_GFX_0), (void *)(OBJ_VRAM0 + gSprites[healthBarSpriteId].oam.tileNum * TILE_SIZE_4BPP), 32);
-            CpuCopy32(GetHealthboxElementGfxPtr(HEALTHBOX_GFX_65), (void *)(OBJ_VRAM0 + (gSprites[healthBarSpriteId].oam.tileNum + 1) * TILE_SIZE_4BPP), 32);
-        }
-    }
+    // HACKROM (Forest of Love): a pret apagava o rótulo "HP" da barra (oponente
+    // e duplas) para caber o ícone. Agora o ícone tem espaço próprio na moldura
+    // alargada, então o rótulo "HP" fica sempre visível (e é redesenhado aqui,
+    // como no ramo "sem status", para voltar depois do modo de números de HP
+    // das duplas, que apaga os tiles da barra).
+    if (!gBattleSpritesDataPtr->battlerData[battler].hpNumbersNoBars)
+        CpuCopy32(GetHealthboxElementGfxPtr(HEALTHBOX_GFX_1), (void *)(OBJ_VRAM0 + gSprites[healthBarSpriteId].oam.tileNum * TILE_SIZE_4BPP), 64);
     TryAddPokeballIconToHealthbox(healthboxSpriteId, FALSE);
 }
 
