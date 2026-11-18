@@ -16,6 +16,7 @@
 #include "script.h"
 #include "tv.h"
 #include "wild_encounter.h"
+#include "fol_rare_surf.h"
 #include "constants/abilities.h"
 #include "constants/game_stat.h"
 #include "constants/items.h"
@@ -26,14 +27,6 @@ extern const u8 EventScript_RepelWoreOff[];
 
 #define MAX_ENCOUNTER_RATE 2880
 
-#define NUM_FEEBAS_SPOTS 6
-
-// Number of accessible fishing spots in each section of Route 119
-// Each section is an area of the route between the y coordinates in sRoute119WaterTileData
-#define NUM_FISHING_SPOTS_1 131
-#define NUM_FISHING_SPOTS_2 167
-#define NUM_FISHING_SPOTS_3 149
-#define NUM_FISHING_SPOTS (NUM_FISHING_SPOTS_1 + NUM_FISHING_SPOTS_2 + NUM_FISHING_SPOTS_3)
 
 enum {
     WILD_AREA_LAND,
@@ -58,113 +51,107 @@ static bool8 TryGetAbilityInfluencedWildMonIndex(const struct WildPokemon *wildM
 static bool8 TryGetAbilityInfluencedWildMonIndex(const struct WildPokemon *wildMon, u8 type, u8 ability, u8 *monIndex);
 #endif
 static bool8 IsAbilityAllowingEncounter(u8 level);
+static u8 ChooseWildMonLevel(const struct WildPokemon *wildPokemon);
+static void CreateWildMon(u16 species, u8 level);
 
 EWRAM_DATA static u8 sWildEncountersDisabled = 0;
 EWRAM_DATA static u32 sFeebasRngValue = 0;
 
 #include "data/wild_encounters.h"
 
-static const struct WildPokemon sWildFeebas = {20, 25, SPECIES_MAGIKARP};
-
-static const u16 sRoute119WaterTileData[] =
-{
-//yMin, yMax, numSpots in previous sections
-     0,  45,  0,
-    46,  91,  NUM_FISHING_SPOTS_1,
-    92, 139,  NUM_FISHING_SPOTS_1 + NUM_FISHING_SPOTS_2,
-};
+// HACKROM (Forest of Love): o Feebas da pesca na Rota 119 virou um encontro
+// raro de SURF (Lapras). Configuração em include/fol_rare_surf.h.
+static const struct WildPokemon sFolRareSurfMon = {FOL_RARE_SURF_MIN_LEVEL, FOL_RARE_SURF_MAX_LEVEL, FOL_RARE_SURF_SPECIES};
 
 void DisableWildEncounters(bool8 disabled)
 {
     sWildEncountersDisabled = disabled;
 }
 
-// Each fishing spot on Route 119 is given a number between 1 and NUM_FISHING_SPOTS inclusive.
-// The number is determined by counting the valid fishing spots left to right top to bottom.
-// The map is divided into three sections, with each section having a pre-counted number of
-// fishing spots to start from to avoid counting a large number of spots at the bottom of the map.
-// Note that a spot is considered valid if it is surfable and not a waterfall. To exclude all
-// of the inaccessible water metatiles (so that they can't be selected as a Feebas spot) they
-// use a different metatile that isn't actually surfable because it has MB_NORMAL instead.
-// This function is given the coordinates and section of a fishing spot and returns which number it is.
-static u16 GetFeebasFishingSpotId(s16 targetX, s16 targetY, u8 section)
+// Cada tile de água surfável (que não seja cachoeira) do mapa recebe um número,
+// de 1 em diante, contando da esquerda para a direita e de cima para baixo -
+// a mesma numeração do Feebas original (que usava 3 seções pré-contadas só
+// para a Rota 119; aqui a contagem é feita no mapa inteiro, então serve para
+// qualquer mapa). Devolve o número do tile (x, y) (0 se não for água) e o
+// total de tiles de água em *total.
+static u16 FolRareSurf_GetSpotId(s16 targetX, s16 targetY, u16 *total)
 {
-    u16 x, y;
-    u16 yMin = sRoute119WaterTileData[section * 3 + 0];
-    u16 yMax = sRoute119WaterTileData[section * 3 + 1];
-    u16 spotId = sRoute119WaterTileData[section * 3 + 2];
+    s16 x, y;
+    u16 count = 0;
+    u16 spotId = 0;
 
-    for (y = yMin; y <= yMax; y++)
+    for (y = 0; y < gMapHeader.mapLayout->height; y++)
     {
         for (x = 0; x < gMapHeader.mapLayout->width; x++)
         {
-            u8 behavior = MapGridGetMetatileBehaviorAt(x + MAP_OFFSET, y + MAP_OFFSET);
-            if (MetatileBehavior_IsSurfableAndNotWaterfall(behavior) == TRUE)
+            if (MetatileBehavior_IsSurfableAndNotWaterfall(MapGridGetMetatileBehaviorAt(x + MAP_OFFSET, y + MAP_OFFSET)) == TRUE)
             {
-                spotId++;
+                count++;
                 if (targetX == x && targetY == y)
-                    return spotId;
+                    spotId = count;
             }
         }
     }
-    return spotId + 1;
+    *total = count;
+    return spotId;
 }
 
-static bool8 CheckFeebas(void)
+// (x, y) em coordenadas do mapa com MAP_OFFSET (como PlayerGetDestCoords).
+// TRUE = este encontro de surf vira o Pokémon raro.
+static bool8 CheckFolRareSurfSpot(s16 x, s16 y)
 {
     u8 i;
-    u16 feebasSpots[NUM_FEEBAS_SPOTS];
-    s16 x, y;
-    u8 route119Section = 0;
-    u16 spotId;
+    u16 spots[FOL_RARE_SURF_NUM_SPOTS];
+    u16 spotId, total;
 
-    if (gSaveBlock1Ptr->location.mapGroup == MAP_GROUP(MAP_ROUTE119)
-     && gSaveBlock1Ptr->location.mapNum == MAP_NUM(MAP_ROUTE119))
+    if (!FOL_RARE_SURF_ENABLED)
+        return FALSE;
+    if (gSaveBlock1Ptr->location.mapGroup != MAP_GROUP(FOL_RARE_SURF_MAP)
+     || gSaveBlock1Ptr->location.mapNum != MAP_NUM(FOL_RARE_SURF_MAP))
+        return FALSE;
+    if (!TestPlayerAvatarFlags(PLAYER_AVATAR_FLAG_SURFING))
+        return FALSE;
+
+    // Mesma chance do Feebas original (50%) quando o tile é raro.
+    if (Random() % 100 >= FOL_RARE_SURF_CHANCE)
+        return FALSE;
+
+    spotId = FolRareSurf_GetSpotId(x - MAP_OFFSET, y - MAP_OFFSET, &total);
+    if (spotId == 0 || total <= FOL_RARE_SURF_SKIP_FIRST_SPOTS)
+        return FALSE;
+
+    // Mesma semente do Feebas (tendência de Dewford), então os tiles só mudam
+    // quando a tendência muda, como no jogo original.
+    FeebasSeedRng(gSaveBlock1Ptr->dewfordTrends[0].rand);
+    for (i = 0; i != FOL_RARE_SURF_NUM_SPOTS;)
     {
-        GetXYCoordsOneStepInFrontOfPlayer(&x, &y);
-        x -= MAP_OFFSET;
-        y -= MAP_OFFSET;
+        spots[i] = FeebasRandom() % total;
+        if (spots[i] == 0)
+            spots[i] = total;
+        if (spots[i] > FOL_RARE_SURF_SKIP_FIRST_SPOTS)
+            i++;
+    }
 
-        // Get which third of the map the player is in
-        if (y >= sRoute119WaterTileData[3 * 0 + 0] && y <= sRoute119WaterTileData[3 * 0 + 1])
-            route119Section = 0;
-        if (y >= sRoute119WaterTileData[3 * 1 + 0] && y <= sRoute119WaterTileData[3 * 1 + 1])
-            route119Section = 1;
-        if (y >= sRoute119WaterTileData[3 * 2 + 0] && y <= sRoute119WaterTileData[3 * 2 + 1])
-            route119Section = 2;
-
-        // 50% chance of encountering Feebas (assuming this is a Feebas spot)
-        if (Random() % 100 > 49)
-            return FALSE;
-
-        FeebasSeedRng(gSaveBlock1Ptr->dewfordTrends[0].rand);
-
-        // Assign each Feebas spot to a random fishing spot.
-        // Randomness is fixed depending on the seed above.
-        for (i = 0; i != NUM_FEEBAS_SPOTS;)
-        {
-            feebasSpots[i] = FeebasRandom() % NUM_FISHING_SPOTS;
-            if (feebasSpots[i] == 0)
-                feebasSpots[i] = NUM_FISHING_SPOTS;
-
-            // < 1 below is a pointless check, it will never be TRUE.
-            // >= 4 to skip fishing spots 1-3, because these are inaccessible
-            // spots at the top of the map, at (9,7), (7,13), and (15,16).
-            // The first accessible fishing spot is spot 4 at (18,18).
-            if (feebasSpots[i] < 1 || feebasSpots[i] >= 4)
-                i++;
-        }
-
-        // Check which fishing spot the player is at, and see if
-        // it matches any of the Feebas spots.
-        spotId = GetFeebasFishingSpotId(x, y, route119Section);
-        for (i = 0; i < NUM_FEEBAS_SPOTS; i++)
-        {
-            if (spotId == feebasSpots[i])
-                return TRUE;
-        }
+    for (i = 0; i < FOL_RARE_SURF_NUM_SPOTS; i++)
+    {
+        if (spotId == spots[i])
+            return TRUE;
     }
     return FALSE;
+}
+
+// Gera o Pokémon raro se (x, y) for um tile raro. checkRepel = respeitar Repel.
+static bool8 TryGenerateFolRareSurfMon(s16 x, s16 y, bool8 checkRepel)
+{
+    u8 level;
+
+    if (!CheckFolRareSurfSpot(x, y))
+        return FALSE;
+    level = ChooseWildMonLevel(&sFolRareSurfMon);
+    if (checkRepel && !IsWildLevelAllowedByRepel(level))
+        return FALSE;
+    CreateWildMon(sFolRareSurfMon.species, level);
+    return TRUE;
 }
 
 static u16 FeebasRandom(void)
@@ -651,6 +638,16 @@ bool8 StandardWildEncounter(u16 curMetatileBehavior, u16 prevMetatileBehavior)
             }
             else // try a regular surfing encounter
             {
+                s16 x, y;
+
+                // HACKROM (Forest of Love): tile raro de surf (Lapras).
+                PlayerGetDestCoords(&x, &y);
+                if (TryGenerateFolRareSurfMon(x, y, TRUE) == TRUE)
+                {
+                    BattleSetup_StartWildBattle();
+                    return TRUE;
+                }
+
                 if (TryGenerateWildMon(gWildMonHeaders[headerId].waterMonsInfo, WILD_AREA_WATER, WILD_CHECK_REPEL | WILD_CHECK_KEEN_EYE) == TRUE)
                 {
                     BattleSetup_StartWildBattle();
@@ -758,7 +755,9 @@ bool8 SweetScentWildEncounter(void)
                 return TRUE;
             }
 
-            TryGenerateWildMon(gWildMonHeaders[headerId].waterMonsInfo, WILD_AREA_WATER, 0);
+            // HACKROM (Forest of Love): Sweet Scent num tile raro também vale.
+            if (TryGenerateFolRareSurfMon(x, y, FALSE) != TRUE)
+                TryGenerateWildMon(gWildMonHeaders[headerId].waterMonsInfo, WILD_AREA_WATER, 0);
             BattleSetup_StartWildBattle();
             return TRUE;
         }
@@ -781,17 +780,9 @@ void FishingWildEncounter(u8 rod)
 {
     u16 species;
 
-    if (CheckFeebas() == TRUE)
-    {
-        u8 level = ChooseWildMonLevel(&sWildFeebas);
-
-        species = sWildFeebas.species;
-        CreateWildMon(species, level);
-    }
-    else
-    {
-        species = GenerateFishingWildMon(gWildMonHeaders[GetCurrentMapWildMonHeaderId()].fishingMonsInfo, rod);
-    }
+    // HACKROM (Forest of Love): sem tiles especiais na pesca (o antigo Feebas
+    // virou o Lapras de surf, veja TryGenerateFolRareSurfMon).
+    species = GenerateFishingWildMon(gWildMonHeaders[GetCurrentMapWildMonHeaderId()].fishingMonsInfo, rod);
     IncrementGameStat(GAME_STAT_FISHING_ENCOUNTERS);
     SetPokemonAnglerSpecies(species);
     BattleSetup_StartWildBattle();

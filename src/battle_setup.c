@@ -524,15 +524,65 @@ void BattleSetup_StartLatiBattle(void)
     TryUpdateGymLeaderRematchFromWild();
 }
 
+// HACKROM (Forest of Love): os estáticos de Hoenn foram trocados por Kanto
+// (Articuno, Zapdos, Moltres, Dragonite, Aerodactyl, Mewtwo, Mew). Na pret o
+// `default:` de BattleSetup_StartLegendaryBattle caía no caso do GROUDON, e
+// todos esses ganhavam transição/música do Groudon + BATTLE_TYPE_GROUDON (que
+// força o fundo de caverna com a paleta do Groudon). Agora a música vem desta
+// função, usada na entrada da batalha e também por GetBattleBGM (quando a
+// música da batalha é retomada no meio dela, ex.: depois de uma captura).
+u16 GetLegendaryBattleMusic(u16 species)
+{
+    switch (species)
+    {
+    case SPECIES_GROUDON:
+    case SPECIES_KYOGRE:
+        return MUS_VS_KYOGRE_GROUDON;
+    case SPECIES_RAYQUAZA:
+        return MUS_VS_RAYQUAZA;
+    case SPECIES_REGIROCK:
+    case SPECIES_REGICE:
+    case SPECIES_REGISTEEL:
+        return MUS_VS_REGI;
+    case SPECIES_DEOXYS:
+        return MUS_RG_VS_DEOXYS;
+    case SPECIES_MEW:
+        return MUS_VS_MEW;
+    case SPECIES_MEWTWO:
+        return MUS_RG_VS_MEWTWO;  // tema do Mewtwo do FireRed/LeafGreen
+    default:
+        return MUS_RG_VS_LEGEND;  // tema dos lendários do FireRed/LeafGreen
+    }
+}
+
+bool8 IsRegiSpecies(u16 species)
+{
+    return (species == SPECIES_REGIROCK || species == SPECIES_REGICE || species == SPECIES_REGISTEEL);
+}
+
 void BattleSetup_StartLegendaryBattle(void)
 {
+    u16 species;
+
     LockPlayerFieldControls();
     gMain.savedCallback = CB2_EndScriptedWildBattle;
     gBattleTypeFlags = BATTLE_TYPE_LEGENDARY;
 
-    switch (GetMonData(&gEnemyParty[0], MON_DATA_SPECIES, NULL))
+    species = GetMonData(&gEnemyParty[0], MON_DATA_SPECIES, NULL);
+    switch (species)
     {
     default:
+        // HACKROM (Forest of Love): qualquer outra espécie (Articuno, Zapdos,
+        // Moltres, Dragonite, Aerodactyl...) ganha a abertura de lendário do
+        // FireRed/LeafGreen: transição BLUR + MUS_RG_VS_LEGEND, SEM flag de
+        // Groudon/Kyogre/Rayquaza (o fundo da batalha volta a seguir o mapa).
+        CreateBattleStartTask(B_TRANSITION_BLUR, GetLegendaryBattleMusic(species));
+        break;
+    case SPECIES_MEWTWO:
+        // HACKROM (Forest of Love): Mewtwo com o tema próprio do FRLG e uma
+        // transição mais dramática que a dos outros lendários.
+        CreateBattleStartTask(B_TRANSITION_SHRED_SPLIT, GetLegendaryBattleMusic(species));
+        break;
     case SPECIES_GROUDON:
         gBattleTypeFlags |= BATTLE_TYPE_GROUDON;
         CreateBattleStartTask(B_TRANSITION_GROUDON, MUS_VS_KYOGRE_GROUDON);
@@ -602,10 +652,18 @@ void StartRegiBattle(void)
         transitionId = B_TRANSITION_REGISTEEL;
         break;
     default:
-        transitionId = B_TRANSITION_GRID_SQUARES;
+        transitionId = B_TRANSITION_BLUR;
         break;
     }
-    CreateBattleStartTask(transitionId, MUS_VS_REGI);
+    // HACKROM (Forest of Love): os estáticos "estilo Regi" agora são Kanto
+    // (Aerodactyl nas Desert Ruins, Articuno na Island Cave, Zapdos no Ancient
+    // Tomb). Para eles: sem BATTLE_TYPE_REGI (que só serve para escolher
+    // MUS_VS_REGI em GetBattleBGM), transição BLUR e a música de lendário do
+    // FRLG, igual aos outros lendários de Kanto. Os Regis de verdade ficam
+    // como na pret.
+    if (!IsRegiSpecies(species))
+        gBattleTypeFlags &= ~BATTLE_TYPE_REGI;
+    CreateBattleStartTask(transitionId, GetLegendaryBattleMusic(species));
 
     IncrementGameStat(GAME_STAT_TOTAL_BATTLES);
     IncrementGameStat(GAME_STAT_WILD_BATTLES);

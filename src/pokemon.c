@@ -6499,6 +6499,12 @@ u16 GetBattleBGM(void)
     {
         return MUS_VS_REGI;
     }
+    // HACKROM (Forest of Love): lendários estáticos (inclusive os da Southern
+    // Island, que entram com música 0) usam a música da espécie.
+    else if (gBattleTypeFlags & BATTLE_TYPE_LEGENDARY)
+    {
+        return GetLegendaryBattleMusic(GetMonData(&gEnemyParty[0], MON_DATA_SPECIES, NULL));
+    }
     else if (gBattleTypeFlags & (BATTLE_TYPE_LINK | BATTLE_TYPE_RECORDED_LINK))
     {
         return MUS_VS_TRAINER;
