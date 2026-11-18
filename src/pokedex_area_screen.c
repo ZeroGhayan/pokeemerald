@@ -16,6 +16,7 @@
 #include "trig.h"
 #include "pokedex_area_region_map.h"
 #include "wild_encounter.h"
+#include "fol_rare_surf.h"
 #include "constants/region_map_sections.h"
 #include "constants/rgb.h"
 #include "constants/songs.h"
@@ -119,9 +120,11 @@ static const mapsec_u16_t sMovingRegionMapSections[3] =
     MAPSEC_TERRA_CAVE
 };
 
+// HACKROM (Forest of Love): mostra no mapa da Pokédex o Pokémon dos tiles raros
+// de surf (antes Feebas na Rota 119), que não aparece em wild_encounters.json.
 static const u16 sFeebasData[][3] =
 {
-    {SPECIES_FEEBAS, MAP_GROUP(MAP_ROUTE119), MAP_NUM(MAP_ROUTE119)},
+    {FOL_RARE_SURF_SPECIES, MAP_GROUP(FOL_RARE_SURF_MAP), MAP_NUM(FOL_RARE_SURF_MAP)},
     {NUM_SPECIES}
 };
 
