@@ -27,6 +27,9 @@ void BattleSetup_StartLatiBattle(void);
 void BattleSetup_StartLegendaryBattle(void);
 void StartGroudonKyogreBattle(void);
 void StartRegiBattle(void);
+// HACKROM (Forest of Love): música e transição dos lendários estáticos por espécie.
+u16 GetLegendaryBattleMusic(u16 species);
+bool8 IsRegiSpecies(u16 species);
 u8 BattleSetup_GetEnvironmentId(void);
 u8 GetSpecialBattleTransition(s32 id);
 void ChooseStarter(void);
